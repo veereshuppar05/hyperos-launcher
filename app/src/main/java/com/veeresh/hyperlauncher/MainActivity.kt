@@ -213,20 +213,65 @@ class MainActivity : Activity() {
                 setOnClickListener { launch(pkg) }
             }, GridLayout.LayoutParams().apply { width = dp(100); height = dp(70) })
         }
-        AlertDialog.Builder(this).setTitle(name).setView(box).setPositiveButton("Close", null).show()
+        AlertDialog.Builder(this).setTitle(name).setView(box)
+            .setNeutralButton("Manage") { _, _ -> folderManage(name) }
+            .setPositiveButton("Close", null).show()
+    }
+
+    private fun folderManage(name: String) {
+        AlertDialog.Builder(this).setTitle("Manage $name")
+            .setItems(arrayOf("Add apps", "Remove apps", "Rename", "Delete folder")) { _, index ->
+                when (index) {
+                    0 -> changeFolderApps(name, add = true)
+                    1 -> changeFolderApps(name, add = false)
+                    2 -> renameFolder(name)
+                    3 -> { val folders = folderMap(); folders.remove(name); saveFolders(folders); render() }
+                }
+            }.show()
+    }
+
+    private fun changeFolderApps(name: String, add: Boolean) {
+        val all = apps()
+        val folders = folderMap()
+        val members = folders[name]?.toMutableSet() ?: mutableSetOf()
+        val candidates = all.filter { info ->
+            val pkg = info.activityInfo.packageName
+            if (add) pkg !in members else pkg in members
+        }
+        if (candidates.isEmpty()) {
+            Toast.makeText(this, if (add) "No apps available to add" else "Folder is empty", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val labels = candidates.map { it.loadLabel(packageManager).toString() }.toTypedArray()
+        val selected = mutableSetOf<String>()
+        AlertDialog.Builder(this).setTitle(if (add) "Add apps to $name" else "Remove apps from $name")
+            .setMultiChoiceItems(labels, BooleanArray(candidates.size)) { _, index, checked ->
+                val pkg = candidates[index].activityInfo.packageName
+                if (checked) selected.add(pkg) else selected.remove(pkg)
+            }
+            .setPositiveButton(if (add) "Add selected" else "Remove selected") { _, _ ->
+                if (add) members.addAll(selected) else members.removeAll(selected)
+                folders[name] = members
+                saveFolders(folders)
+                render()
+            }.setNegativeButton("Cancel", null).show()
+    }
+
+    private fun renameFolder(name: String) {
+        val input = EditText(this).apply { setText(name) }
+        AlertDialog.Builder(this).setTitle("Rename folder").setView(input).setPositiveButton("Save") { _, _ ->
+            val newName = input.text.toString().trim()
+            if (newName.isNotEmpty() && newName != name) {
+                val folders = folderMap()
+                folders[newName] = folders.remove(name) ?: mutableSetOf()
+                saveFolders(folders)
+                render()
+            }
+        }.setNegativeButton("Cancel", null).show()
     }
 
     private fun folderMenu(name: String) {
-        AlertDialog.Builder(this).setTitle(name).setItems(arrayOf("Rename", "Delete")) { _, index ->
-            val folders = folderMap()
-            if (index == 0) {
-                val input = EditText(this).apply { setText(name) }
-                AlertDialog.Builder(this).setTitle("Rename folder").setView(input).setPositiveButton("Save") { _, _ ->
-                    val newName = input.text.toString().trim()
-                    if (newName.isNotEmpty()) { folders[newName] = folders.remove(name) ?: mutableSetOf(); saveFolders(folders); render() }
-                }.setNegativeButton("Cancel", null).show()
-            } else { folders.remove(name); saveFolders(folders); render() }
-        }.show()
+        folderManage(name)
     }
 
     private fun settings() {
