@@ -88,7 +88,7 @@ class MainActivity : Activity() {
 
         val scroll = ScrollView(this)
         val swipeDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
-            override fun onFling(e1: MotionEvent?, e2: MotionEvent?, velocityX: Float, velocityY: Float): Boolean {
+            override fun onFling(e1: MotionEvent, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
                 if (e1 != null && e2 != null && kotlin.math.abs(e2.x - e1.x) > dp(90) &&
                     kotlin.math.abs(e2.x - e1.x) > kotlin.math.abs(e2.y - e1.y) * 1.25f &&
                     kotlin.math.abs(velocityX) > dp(250)) {
