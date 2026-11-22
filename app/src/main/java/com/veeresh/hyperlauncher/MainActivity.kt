@@ -25,6 +25,7 @@ class MainActivity : Activity() {
     private var showingApps = false
     private val columns = 5
     private val prefs by lazy { getSharedPreferences("hyperlauncher", MODE_PRIVATE) }
+    private val showLabels: Boolean get() = prefs.getBoolean("show_labels", true)
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
     private fun bg(c: Int, r: Int) = GradientDrawable().apply { setColor(c); cornerRadius = dp(r).toFloat() }
@@ -150,7 +151,7 @@ class MainActivity : Activity() {
             setCompoundDrawables(null, drawable, null, null)
         }
         tile.addView(icon, LinearLayout.LayoutParams(dp(58), dp(58)))
-        tile.addView(TextView(this).apply {
+        if (showLabels) tile.addView(TextView(this).apply {
             text = label; textSize = 10.5f; gravity = Gravity.CENTER; setTextColor(Color.WHITE); maxLines = 2
         }, LinearLayout.LayoutParams(-1, dp(34)))
         grid.addView(tile, GridLayout.LayoutParams().apply { this.width = width; height = dp(102) })
@@ -189,7 +190,11 @@ class MainActivity : Activity() {
                 "App info" -> startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$pkg")))
                 "Uninstall" -> startActivity(Intent(Intent.ACTION_DELETE, Uri.parse("package:$pkg")))
                 "Create folder" -> createFolder(pkg)
-                "Add to Dock" -> { val list = dock(); if (pkg !in list) list.add(pkg); prefs.edit().putString("dock", list.take(5).joinToString(",")).apply(); refreshDock() }
+                "Add to Dock" -> {
+                    val list = dock()
+                    if (pkg !in list && list.size >= 5) Toast.makeText(this, "Dock is full (5 apps)", Toast.LENGTH_SHORT).show()
+                    else { if (pkg !in list) list.add(pkg); prefs.edit().putString("dock", list.take(5).joinToString(",")).apply(); refreshDock() }
+                }
                 "Remove from Dock" -> { val list = dock(); list.remove(pkg); prefs.edit().putString("dock", list.joinToString(",")).apply(); refreshDock() }
             }
         }.show()
@@ -275,9 +280,15 @@ class MainActivity : Activity() {
     }
 
     private fun settings() {
-        AlertDialog.Builder(this).setTitle("Launcher settings").setItems(arrayOf("Customize dock", "Clear home pins")) { _, index ->
-            if (index == 0) dockPicker() else { prefs.edit().putStringSet("pinned", emptySet()).apply(); render() }
-        }.show()
+        val labelOption = if (showLabels) "Hide app labels" else "Show app labels"
+        AlertDialog.Builder(this).setTitle("Launcher settings")
+            .setItems(arrayOf("Customize dock", labelOption, "Clear home pins")) { _, index ->
+                when (index) {
+                    0 -> dockPicker()
+                    1 -> { prefs.edit().putBoolean("show_labels", !showLabels).apply(); render() }
+                    2 -> { prefs.edit().putStringSet("pinned", emptySet()).apply(); render() }
+                }
+            }.show()
     }
 
     private fun dockPicker() {
