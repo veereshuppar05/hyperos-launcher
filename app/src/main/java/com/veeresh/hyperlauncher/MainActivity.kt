@@ -127,7 +127,7 @@ class MainActivity : Activity() {
         if (chosen.isEmpty() && !showingApps && query.isEmpty() && folderMap().isEmpty()) {
             grid.addView(TextView(this).apply {
                 text = "Home screen is empty. Open Apps and long-press an app to pin it."
-                gravity = Gravity.CENTER; textSize = 14f; setTextColor(0xffc0c8d5.toInt()
+                gravity = Gravity.CENTER; textSize = 14f; setTextColor(0xffc0c8d5.toInt())
             }, GridLayout.LayoutParams().apply { this.width = resources.displayMetrics.widthPixels - dp(32); height = dp(150) })
         }
     }
@@ -160,7 +160,8 @@ class MainActivity : Activity() {
         tile.addView(TextView(this).apply {
             text = "▦"; textSize = 30f; gravity = Gravity.CENTER; setTextColor(Color.WHITE); background = bg(0xff394255.toInt(), 18)
         }, LinearLayout.LayoutParams(dp(58), dp(58)))
-        tile.addView(TextView(this).apply { text = name; textSize = 10.5f; gravity = Gravity.CENTER; setTextColor(Color.WHITE }, LinearLayout.LayoutParams(-1, dp(34)))
+        tile.addView(TextView(this).apply { text = name; textSize = 10.5f; gravity = Gravity.CENTER; setTextColor(Color.WHITE)
+        }, LinearLayout.LayoutParams(-1, dp(34)))
         grid.addView(tile, GridLayout.LayoutParams().apply { this.width = width; height = dp(102) })
     }
 
@@ -253,7 +254,7 @@ class MainActivity : Activity() {
         val list = dock()
         if (list.isEmpty()) {
             bar.addView(TextView(this).apply {
-                text = "Dock • Customize from ⋮"; gravity = Gravity.CENTER; textSize = 12f; setTextColor(0xffcdd3df.toInt()
+                text = "Dock • Customize from ⋮"; gravity = Gravity.CENTER; textSize = 12f; setTextColor(0xffcdd3df.toInt())
             }, LinearLayout.LayoutParams(-1, dp(44)))
             return
         }
