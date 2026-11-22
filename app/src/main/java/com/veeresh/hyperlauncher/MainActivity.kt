@@ -26,7 +26,7 @@ class MainActivity : Activity() {
     private lateinit var grid: GridLayout
     private lateinit var search: EditText
     private var showingApps = false
-    private val columns = 5
+    private val columns: Int get() = prefs.getInt("grid_columns", 5)
     private val prefs by lazy { getSharedPreferences("hyperlauncher", MODE_PRIVATE) }
     private val showLabels: Boolean get() = prefs.getBoolean("show_labels", true)
     private val iconSizeDp: Int get() = prefs.getInt("icon_size_dp", 58)
@@ -367,19 +367,32 @@ class MainActivity : Activity() {
     private fun settings() {
         val labelOption = if (showLabels) "Hide app labels" else "Show app labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Customize dock", "Icon size", "Change wallpaper", "Reset wallpaper", labelOption, "Clear home pins")) { _, index ->
+            .setItems(arrayOf("Home grid", "Customize dock", "Icon size", "Change wallpaper", "Reset wallpaper", labelOption, "Clear home pins")) { _, index ->
                 when (index) {
-                    0 -> dockPicker()
-                    1 -> iconSizePicker()
-                    2 -> chooseWallpaper()
-                    3 -> { prefs.edit().remove("wallpaper_uri").apply(); recreate() }
-                    4 -> { prefs.edit().putBoolean("show_labels", !showLabels).apply(); render() }
-                    5 -> AlertDialog.Builder(this).setTitle("Clear home pins?")
+                    0 -> homeGridPicker()
+                    1 -> dockPicker()
+                    2 -> iconSizePicker()
+                    3 -> chooseWallpaper()
+                    4 -> { prefs.edit().remove("wallpaper_uri").apply(); recreate() }
+                    5 -> { prefs.edit().putBoolean("show_labels", !showLabels).apply(); render() }
+                    6 -> AlertDialog.Builder(this).setTitle("Clear home pins?")
                         .setMessage("Remove all pinned apps from the Home tab?")
                         .setPositiveButton("Clear") { _, _ -> prefs.edit().putStringSet("pinned", emptySet()).apply(); render() }
                         .setNegativeButton("Cancel", null).show()
                 }
             }.show()
+    }
+
+    private fun homeGridPicker() {
+        val options = arrayOf("4 columns", "5 columns", "6 columns")
+        val values = intArrayOf(4, 5, 6)
+        val current = values.indexOf(columns).coerceAtLeast(0)
+        AlertDialog.Builder(this).setTitle("Home screen grid")
+            .setSingleChoiceItems(options, current) { dialog, which ->
+                prefs.edit().putInt("grid_columns", values[which]).apply()
+                dialog.dismiss()
+                render()
+            }.setNegativeButton("Cancel", null).show()
     }
 
     private fun iconSizePicker() {
