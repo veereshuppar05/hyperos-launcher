@@ -37,7 +37,7 @@ class MainActivity : Activity() {
         header.addView(TextView(this).apply{text="HyperLauncher";textSize=26f;setTextColor(Color.WHITE})
         header.addView(TextView(this).apply{text="  ⋮";textSize=24f;setTextColor(Color.WHITE);gravity=Gravity.CENTER;setOnClickListener{settings()}},LinearLayout.LayoutParams(dp(48),dp(48)))
         root.addView(header,LinearLayout.LayoutParams(-1,dp(48)))
-        search=EditText(this).apply{hint="Search apps";setHintTextColor(0xff9ba3b2.toInt();setTextColor(Color.WHITE);singleLine=true;setPadding(dp(16),0,dp(16),0);background=bg(0xff272b36.toInt(),24)}
+        search=EditText(this).apply{hint="Search apps";setHintTextColor(0xff9ba3b2.toInt());setTextColor(Color.WHITE);singleLine=true;setPadding(dp(16),0,dp(16),0);background=bg(0xff272b36.toInt(),24)}
         root.addView(search,LinearLayout.LayoutParams(-1,dp(48)).apply{topMargin=dp(12)})
         val tabs=LinearLayout(this).apply{orientation=0;setPadding(0,dp(10),0,dp(8))}
         tabs.addView(tab("Home"){showingApps=false;search.setText("");render()},LinearLayout.LayoutParams(0,dp(40),1f))
@@ -58,7 +58,7 @@ class MainActivity : Activity() {
         if(!showingApps&&query.isEmpty())folderMap().forEach{(name,packages)->folderTile(name,packages,all)}
         val width=(resources.displayMetrics.widthPixels-dp(32))/columns
         chosen.forEach{info->appTile(info,width)}
-        if(chosen.isEmpty()&&!showingApps&&query.isEmpty()&&folderMap().isEmpty())grid.addView(TextView(this).apply{text="Home screen is empty. Open Apps and long-press an app to pin it.";gravity=Gravity.CENTER;textSize=14f;setTextColor(0xffc0c8d5.toInt()},GridLayout.LayoutParams().apply{this.width=resources.displayMetrics.widthPixels-dp(32);height=dp(150)})
+        if(chosen.isEmpty()&&!showingApps&&query.isEmpty()&&folderMap().isEmpty())grid.addView(TextView(this).apply{text="Home screen is empty. Open Apps and long-press an app to pin it.";gravity=Gravity.CENTER;textSize=14f;setTextColor(0xffc0c8d5.toInt())},GridLayout.LayoutParams().apply{this.width=resources.displayMetrics.widthPixels-dp(32);height=dp(150)})
     }
     private fun appTile(info:android.content.pm.ResolveInfo,width:Int){
         val pkg=info.activityInfo.packageName;val label=info.loadLabel(packageManager).toString()
@@ -104,6 +104,6 @@ class MainActivity : Activity() {
         AlertDialog.Builder(this).setTitle("Select up to 5 dock apps").setMultiChoiceItems(labels,checked){_,i,isChecked->val p=all[i].activityInfo.packageName;if(isChecked){if(selected.size<5)selected.add(p)}else selected.remove(p)}.setPositiveButton("Save"){_,_->prefs.edit().putString("dock",selected.take(5).joinToString(",")).apply();refreshDock()}.setNegativeButton("Cancel",null).show()
     }
     private fun refreshDock(){val parent=grid.parent?.parent as? LinearLayout?:return;parent.removeViewAt(parent.childCount-1);val bar=LinearLayout(this).apply{orientation=0;gravity=Gravity.CENTER;background=bg(0xff242833.toInt(),24);setPadding(dp(6),dp(6),dp(6),dp(6))};parent.addView(bar,LinearLayout.LayoutParams(-1,dp(60)));updateDock(bar)}
-    private fun updateDock(bar:LinearLayout){val list=dock();if(list.isEmpty()){bar.addView(TextView(this).apply{text="Dock • Customize from ⋮";gravity=Gravity.CENTER;textSize=12f;setTextColor(0xffcdd3df.toInt()},LinearLayout.LayoutParams(-1,dp(44)));return};list.take(5).forEach{pkg->val info=apps().firstOrNull{it.activityInfo.packageName==pkg};if(info!=null)bar.addView(TextView(this).apply{gravity=Gravity.CENTER;val d=info.loadIcon(packageManager);d.setBounds(0,0,dp(34),dp(34));setCompoundDrawables(null,d,null,null);setOnClickListener{launch(pkg)};setOnLongClickListener{appMenu(pkg,info.loadLabel(packageManager).toString());true}},LinearLayout.LayoutParams(0,dp(44),1f))}}
+    private fun updateDock(bar:LinearLayout){val list=dock();if(list.isEmpty()){bar.addView(TextView(this).apply{text="Dock • Customize from ⋮";gravity=Gravity.CENTER;textSize=12f;setTextColor(0xffcdd3df.toInt())},LinearLayout.LayoutParams(-1,dp(44)));return};list.take(5).forEach{pkg->val info=apps().firstOrNull{it.activityInfo.packageName==pkg};if(info!=null)bar.addView(TextView(this).apply{gravity=Gravity.CENTER;val d=info.loadIcon(packageManager);d.setBounds(0,0,dp(34),dp(34));setCompoundDrawables(null,d,null,null);setOnClickListener{launch(pkg)};setOnLongClickListener{appMenu(pkg,info.loadLabel(packageManager).toString());true}},LinearLayout.LayoutParams(0,dp(44),1f))}}
     private fun launch(pkg:String){packageManager.getLaunchIntentForPackage(pkg)?.let{startActivity(it)}?:Toast.makeText(this,"App unavailable",Toast.LENGTH_SHORT).show()}
 }
