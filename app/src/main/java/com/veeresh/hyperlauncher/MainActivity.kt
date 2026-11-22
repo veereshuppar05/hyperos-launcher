@@ -176,7 +176,7 @@ class MainActivity : Activity() {
                 setPadding(dp(2), dp(2), dp(2), dp(2))
             }
             preview.addView(miniIcon, GridLayout.LayoutParams().apply {
-                width = dp(24); height = dp(24)
+                this.width = dp(24); this.height = dp(24)
             })
         }
         tile.addView(preview, LinearLayout.LayoutParams(dp(58), dp(58)))
