@@ -6,6 +6,9 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
 import android.graphics.Color
+import android.graphics.BitmapFactory
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
@@ -56,7 +59,7 @@ class MainActivity : Activity() {
         val root = LinearLayout(this).apply {
             orientation = 1
             setPadding(dp(16), dp(20), dp(16), dp(10))
-            setBackgroundColor(Color.rgb(18, 20, 27))
+            background = wallpaperDrawable() ?: bg(Color.rgb(18, 20, 27), 0)
         }
         val header = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
         header.addView(TextView(this).apply {
@@ -328,15 +331,50 @@ class MainActivity : Activity() {
         folderManage(name)
     }
 
+    private fun wallpaperDrawable(): Drawable? {
+        val saved = prefs.getString("wallpaper_uri", null) ?: return null
+        return try {
+            val uri = Uri.parse(saved)
+            contentResolver.openInputStream(uri)?.use { stream ->
+                BitmapFactory.decodeStream(stream)?.let { BitmapDrawable(resources, it) }
+            }
+        } catch (_: Exception) { null }
+    }
+
+    private fun chooseWallpaper() {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "image/*"
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+        }
+        startActivityForResult(intent, 2401)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 2401 && resultCode == RESULT_OK) {
+            val uri = data?.data ?: return
+            try {
+                contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                prefs.edit().putString("wallpaper_uri", uri.toString()).apply()
+                recreate()
+            } catch (_: Exception) {
+                Toast.makeText(this, "Couldn't save wallpaper selection", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     private fun settings() {
         val labelOption = if (showLabels) "Hide app labels" else "Show app labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Customize dock", "Icon size", labelOption, "Clear home pins")) { _, index ->
+            .setItems(arrayOf("Customize dock", "Icon size", "Change wallpaper", "Reset wallpaper", labelOption, "Clear home pins")) { _, index ->
                 when (index) {
                     0 -> dockPicker()
                     1 -> iconSizePicker()
-                    2 -> { prefs.edit().putBoolean("show_labels", !showLabels).apply(); render() }
-                    3 -> AlertDialog.Builder(this).setTitle("Clear home pins?")
+                    2 -> chooseWallpaper()
+                    3 -> { prefs.edit().remove("wallpaper_uri").apply(); recreate() }
+                    4 -> { prefs.edit().putBoolean("show_labels", !showLabels).apply(); render() }
+                    5 -> AlertDialog.Builder(this).setTitle("Clear home pins?")
                         .setMessage("Remove all pinned apps from the Home tab?")
                         .setPositiveButton("Clear") { _, _ -> prefs.edit().putStringSet("pinned", emptySet()).apply(); render() }
                         .setNegativeButton("Cancel", null).show()
