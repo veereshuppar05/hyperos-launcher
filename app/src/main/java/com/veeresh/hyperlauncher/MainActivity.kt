@@ -27,8 +27,8 @@ class MainActivity : Activity() {
     private fun dp(v:Int)=(v*resources.displayMetrics.density).toInt()
     private fun bg(c:Int,r:Int)=GradientDrawable().apply{setColor(c);cornerRadius=dp(r).toFloat()}
     private fun pinned()=prefs.getStringSet("pinned",emptySet())?.toMutableSet()?:mutableSetOf()
-    private fun folderMap():MutableMap<String,MutableSet<String>> = (prefs.getString("folders","")?: "").split("\\n").filter{it.contains("|")}.associate { line-> val p=line.split("|",limit=2);p[0] to p[1].split(",").toSet() }.toMutableMap()
-    private fun saveFolders(f:Map<String,Set<String>>) = prefs.edit().putString("folders",f.entries.joinToString("\\n"){it.key+"|"+it.value.joinToString(",")}).apply()
+    private fun folderMap():MutableMap<String,MutableSet<String>> = (prefs.getString("folders","")?: "").split("\n").filter{it.contains("|")}.associate { line-> val p=line.split("|",limit=2);p[0] to p[1].split(",").toSet() }.toMutableMap()
+    private fun saveFolders(f:Map<String,Set<String>>) = prefs.edit().putString("folders",f.entries.joinToString("\n"){it.key+"|"+it.value.joinToString(",")}).apply()
     private fun dock()=prefs.getString("dock","")?.split(",")?.filter{it.isNotBlank()}?.toMutableList()?:mutableListOf()
     override fun onCreate(savedInstanceState:Bundle?){super.onCreate(savedInstanceState);window.statusBarColor=Color.rgb(18,20,27);window.navigationBarColor=Color.rgb(18,20,27);buildUi();render()}
     private fun buildUi(){
