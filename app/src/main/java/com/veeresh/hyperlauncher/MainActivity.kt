@@ -125,10 +125,15 @@ class MainActivity : Activity() {
         val width = (resources.displayMetrics.widthPixels - dp(32)) / columns
         chosen.forEach { appTile(it, width) }
         if (chosen.isEmpty() && !showingApps && query.isEmpty() && folderMap().isEmpty()) {
-            grid.addView(TextView(this).apply {
-                text = "Home screen is empty. Open Apps and long-press an app to pin it."
-                gravity = Gravity.CENTER; textSize = 14f; setTextColor(0xffc0c8d5.toInt())
-            }, GridLayout.LayoutParams().apply { this.width = resources.displayMetrics.widthPixels - dp(32); height = dp(150) })
+            val emptyHint = TextView(this)
+            emptyHint.text = "Home screen is empty. Open Apps and long-press an app to pin it."
+            emptyHint.gravity = Gravity.CENTER
+            emptyHint.textSize = 14f
+            emptyHint.setTextColor(0xffc0c8d5.toInt()
+            val hintParams = GridLayout.LayoutParams()
+            hintParams.width = resources.displayMetrics.widthPixels - dp(32)
+            hintParams.height = dp(150)
+            grid.addView(emptyHint, hintParams)
         }
     }
 
@@ -160,8 +165,12 @@ class MainActivity : Activity() {
         tile.addView(TextView(this).apply {
             text = "▦"; textSize = 30f; gravity = Gravity.CENTER; setTextColor(Color.WHITE); background = bg(0xff394255.toInt(), 18)
         }, LinearLayout.LayoutParams(dp(58), dp(58)))
-        tile.addView(TextView(this).apply { text = name; textSize = 10.5f; gravity = Gravity.CENTER; setTextColor(Color.WHITE)
-        }, LinearLayout.LayoutParams(-1, dp(34)))
+        val folderLabel = TextView(this)
+        folderLabel.text = name
+        folderLabel.textSize = 10.5f
+        folderLabel.gravity = Gravity.CENTER
+        folderLabel.setTextColor(Color.WHITE)
+        tile.addView(folderLabel, LinearLayout.LayoutParams(-1, dp(34)))
         grid.addView(tile, GridLayout.LayoutParams().apply { this.width = width; height = dp(102) })
     }
 
