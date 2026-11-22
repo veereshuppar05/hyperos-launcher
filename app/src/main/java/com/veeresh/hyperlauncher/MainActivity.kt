@@ -129,7 +129,7 @@ class MainActivity : Activity() {
             emptyHint.text = "Home screen is empty. Open Apps and long-press an app to pin it."
             emptyHint.gravity = Gravity.CENTER
             emptyHint.textSize = 14f
-            emptyHint.setTextColor(0xffc0c8d5.toInt()
+            emptyHint.setTextColor(0xffc0c8d5.toInt())
             val hintParams = GridLayout.LayoutParams()
             hintParams.width = resources.displayMetrics.widthPixels - dp(32)
             hintParams.height = dp(150)
@@ -262,9 +262,12 @@ class MainActivity : Activity() {
     private fun updateDock(bar: LinearLayout) {
         val list = dock()
         if (list.isEmpty()) {
-            bar.addView(TextView(this).apply {
-                text = "Dock • Customize from ⋮"; gravity = Gravity.CENTER; textSize = 12f; setTextColor(0xffcdd3df.toInt())
-            }, LinearLayout.LayoutParams(-1, dp(44)))
+            val dockHint = TextView(this)
+            dockHint.text = "Dock • Customize from ⋮"
+            dockHint.gravity = Gravity.CENTER
+            dockHint.textSize = 12f
+            dockHint.setTextColor(0xffcdd3df.toInt())
+            bar.addView(dockHint, LinearLayout.LayoutParams(-1, dp(44)))
             return
         }
         list.take(5).forEach { pkg ->
