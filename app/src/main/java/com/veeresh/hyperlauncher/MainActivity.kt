@@ -283,11 +283,15 @@ class MainActivity : Activity() {
     private fun settings() {
         val labelOption = if (showLabels) "Hide app labels" else "Show app labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Customize dock", labelOption, "Clear home pins")) { _, index ->
+            .setItems(arrayOf("Customize dock", "Icon size", labelOption, "Clear home pins")) { _, index ->
                 when (index) {
                     0 -> dockPicker()
-                    1 -> { prefs.edit().putBoolean("show_labels", !showLabels).apply(); render() }
-                    2 -> { prefs.edit().putStringSet("pinned", emptySet()).apply(); render() }
+                    1 -> iconSizePicker()
+                    2 -> { prefs.edit().putBoolean("show_labels", !showLabels).apply(); render() }
+                    3 -> AlertDialog.Builder(this).setTitle("Clear home pins?")
+                        .setMessage("Remove all pinned apps from the Home tab?")
+                        .setPositiveButton("Clear") { _, _ -> prefs.edit().putStringSet("pinned", emptySet()).apply(); render() }
+                        .setNegativeButton("Cancel", null).show()
                 }
             }.show()
     }
@@ -309,9 +313,15 @@ class MainActivity : Activity() {
         val labels = all.map { it.loadLabel(packageManager).toString() }.toTypedArray()
         val checked = BooleanArray(all.size) { all[it].activityInfo.packageName in current }
         val selected = current.toMutableSet()
-        AlertDialog.Builder(this).setTitle("Select up to 5 dock apps").setMultiChoiceItems(labels, checked) { _, i, isChecked ->
+        AlertDialog.Builder(this).setTitle("Select up to 5 dock apps").setMultiChoiceItems(labels, checked) { dialog, i, isChecked ->
             val pkg = all[i].activityInfo.packageName
-            if (isChecked) { if (selected.size < 5) selected.add(pkg) } else selected.remove(pkg)
+            if (isChecked) {
+                if (selected.size < 5) selected.add(pkg)
+                else {
+                    (dialog as AlertDialog).listView.setItemChecked(i, false)
+                    Toast.makeText(this, "Maximum 5 dock apps", Toast.LENGTH_SHORT).show()
+                }
+            } else selected.remove(pkg)
         }.setPositiveButton("Save") { _, _ ->
             prefs.edit().putString("dock", selected.take(5).joinToString(",")).apply(); refreshDock()
         }.setNegativeButton("Cancel", null).show()
