@@ -204,8 +204,17 @@ class MainActivity : Activity() {
     private fun createFolder(pkg: String) {
         val input = EditText(this).apply { hint = "Folder name" }
         AlertDialog.Builder(this).setTitle("Create folder").setView(input).setPositiveButton("Create") { _, _ ->
-            val name = input.text.toString().trim().ifEmpty { "Folder" }
-            val folders = folderMap(); folders[name] = (folders[name] ?: mutableSetOf()).toMutableSet().apply { add(pkg) }
+            val name = input.text.toString().trim()
+            if (name.isEmpty()) {
+                Toast.makeText(this, "Enter a folder name", Toast.LENGTH_SHORT).show()
+                return@setPositiveButton
+            }
+            val folders = folderMap()
+            if (folders.values.any { pkg in it }) {
+                Toast.makeText(this, "This app is already in a folder", Toast.LENGTH_SHORT).show()
+                return@setPositiveButton
+            }
+            folders[name] = (folders[name] ?: mutableSetOf()).toMutableSet().apply { add(pkg) }
             saveFolders(folders); render()
         }.setNegativeButton("Cancel", null).show()
     }
@@ -267,8 +276,16 @@ class MainActivity : Activity() {
         val input = EditText(this).apply { setText(name) }
         AlertDialog.Builder(this).setTitle("Rename folder").setView(input).setPositiveButton("Save") { _, _ ->
             val newName = input.text.toString().trim()
-            if (newName.isNotEmpty() && newName != name) {
+            if (newName.isEmpty()) {
+                Toast.makeText(this, "Folder name cannot be empty", Toast.LENGTH_SHORT).show()
+                return@setPositiveButton
+            }
+            if (newName != name) {
                 val folders = folderMap()
+                if (newName in folders) {
+                    Toast.makeText(this, "A folder with that name already exists", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
                 folders[newName] = folders.remove(name) ?: mutableSetOf()
                 saveFolders(folders)
                 render()
