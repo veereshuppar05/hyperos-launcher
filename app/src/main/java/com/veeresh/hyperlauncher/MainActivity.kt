@@ -125,15 +125,15 @@ class MainActivity : Activity() {
         val width = (resources.displayMetrics.widthPixels - dp(32)) / columns
         chosen.forEach { appTile(it, width) }
         if (chosen.isEmpty() && !showingApps && query.isEmpty() && folderMap().isEmpty()) {
-            val emptyHint = TextView(this)
-            emptyHint.text = "Home screen is empty. Open Apps and long-press an app to pin it."
-            emptyHint.gravity = Gravity.CENTER
-            emptyHint.textSize = 14f
-            emptyHint.setTextColor(0xffc0c8d5.toInt())
-            val hintParams = GridLayout.LayoutParams()
-            hintParams.width = resources.displayMetrics.widthPixels - dp(32)
-            hintParams.height = dp(150)
-            grid.addView(emptyHint, hintParams)
+            grid.addView(TextView(this).apply {
+                text = "Home screen is empty. Open Apps and long-press an app to pin it."
+                gravity = Gravity.CENTER
+                textSize = 14f
+                setTextColor(Color.LTGRAY)
+            }, GridLayout.LayoutParams().apply {
+                width = resources.displayMetrics.widthPixels - dp(32)
+                height = dp(150)
+            })
         }
     }
 
