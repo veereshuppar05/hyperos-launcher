@@ -76,7 +76,7 @@ class MainActivity : Activity() {
             setHintTextColor(Color.rgb(155, 163, 178))
             setTextColor(Color.WHITE)
             textSize = 15f
-            singleLine = true
+            setSingleLine(true)
             setPadding(dp(16), 0, dp(16), 0)
             background = rounded(Color.rgb(39, 43, 54), 24)
         }
@@ -144,7 +144,7 @@ class MainActivity : Activity() {
             it.loadLabel(pm).toString().contains(query, ignoreCase = true)
         }
         grid.removeAllViews()
-        val width = (resources.displayMetrics.widthPixels - dp(32)) / columns
+        val cellWidth = (resources.displayMetrics.widthPixels - dp(32)) / columns
 
         filtered.forEach { info ->
             val tile = LinearLayout(this).apply {
@@ -184,8 +184,8 @@ class MainActivity : Activity() {
             tile.addView(label, LinearLayout.LayoutParams(-1, dp(34)))
 
             val params = GridLayout.LayoutParams().apply {
-                width = width
-                height = dp(102)
+                this.width = cellWidth
+                this.height = dp(102)
                 setMargins(0, 0, 0, dp(2))
             }
             grid.addView(tile, params)
