@@ -144,7 +144,7 @@ class MainActivity : Activity() {
         val label = info.loadLabel(packageManager).toString()
         val tile = LinearLayout(this).apply {
             orientation = 1; gravity = Gravity.CENTER; setPadding(dp(2), dp(8), dp(2), dp(8))
-            setOnClickListener { launch(pkg) }; setOnLongClickListener { appMenu(pkg, label); true }
+            setOnClickListener { animateTap(this) { launch(pkg) } }; setOnLongClickListener { appMenu(pkg, label); true }
         }
         val icon = TextView(this).apply {
             gravity = Gravity.CENTER; background = bg(0xff2f3544.toInt(), 18)
@@ -162,7 +162,7 @@ class MainActivity : Activity() {
         val width = (resources.displayMetrics.widthPixels - dp(32)) / columns
         val tile = LinearLayout(this).apply {
             orientation = 1; gravity = Gravity.CENTER; setPadding(dp(2), dp(8), dp(2), dp(8))
-            setOnClickListener { openFolder(name, pkgs, all) }; setOnLongClickListener { folderMenu(name); true }
+            setOnClickListener { animateTap(this) { openFolder(name, pkgs, all) } }; setOnLongClickListener { folderMenu(name); true }
         }
         val preview = GridLayout(this).apply {
             columnCount = 2
@@ -244,7 +244,7 @@ class MainActivity : Activity() {
             val label = info.loadLabel(packageManager).toString()
             val tile = LinearLayout(this).apply {
                 orientation = 1; gravity = Gravity.CENTER; setPadding(dp(4), dp(8), dp(4), dp(8))
-                setOnClickListener { launch(pkg) }
+                setOnClickListener { animateTap(this) { launch(pkg) } }
             }
             val iconView = TextView(this).apply {
                 gravity = Gravity.CENTER
@@ -403,9 +403,17 @@ class MainActivity : Activity() {
                 gravity = Gravity.CENTER
                 val drawable = info.loadIcon(packageManager); drawable.setBounds(0, 0, dp(34), dp(34))
                 setCompoundDrawables(null, drawable, null, null)
-                setOnClickListener { launch(pkg) }
+                setOnClickListener { animateTap(this) { launch(pkg) } }
                 setOnLongClickListener { appMenu(pkg, info.loadLabel(packageManager).toString()); true }
             }, LinearLayout.LayoutParams(0, dp(44), 1f))
+        }
+    }
+
+    private fun animateTap(view: android.view.View, action: () -> Unit) {
+        view.animate().cancel()
+        view.animate().scaleX(0.94f).scaleY(0.94f).setDuration(85).withEndAction {
+            view.animate().scaleX(1f).scaleY(1f).setDuration(100)
+            action()
         }
     }
 
