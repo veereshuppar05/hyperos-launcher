@@ -164,9 +164,22 @@ class MainActivity : Activity() {
             orientation = 1; gravity = Gravity.CENTER; setPadding(dp(2), dp(8), dp(2), dp(8))
             setOnClickListener { openFolder(name, pkgs, all) }; setOnLongClickListener { folderMenu(name); true }
         }
-        tile.addView(TextView(this).apply {
-            text = "▦"; textSize = 30f; gravity = Gravity.CENTER; setTextColor(Color.WHITE); background = bg(0xff394255.toInt(), 18)
-        }, LinearLayout.LayoutParams(dp(58), dp(58)))
+        val preview = GridLayout(this).apply {
+            columnCount = 2
+            background = bg(0xff394255.toInt(), 18)
+            setPadding(dp(5), dp(5), dp(5), dp(5))
+        }
+        all.filter { it.activityInfo.packageName in pkgs }.take(4).forEach { info ->
+            val miniIcon = android.widget.ImageView(this).apply {
+                setImageDrawable(info.loadIcon(packageManager))
+                scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
+                setPadding(dp(2), dp(2), dp(2), dp(2))
+            }
+            preview.addView(miniIcon, GridLayout.LayoutParams().apply {
+                width = dp(24); height = dp(24)
+            })
+        }
+        tile.addView(preview, LinearLayout.LayoutParams(dp(58), dp(58)))
         val folderLabel = TextView(this)
         folderLabel.text = name
         folderLabel.textSize = 10.5f
