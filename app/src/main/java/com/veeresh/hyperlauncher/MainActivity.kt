@@ -292,7 +292,19 @@ class MainActivity : Activity() {
             }.show()
     }
 
-    private fun iconSizePicker() {        val sizes = arrayOf("Small", "Medium", "Large")\n        val values = intArrayOf(48, 58, 68)\n        val current = values.indexOf(iconSizeDp).coerceAtLeast(0)\n        AlertDialog.Builder(this).setTitle("Icon size")\n            .setSingleChoiceItems(sizes, current) { dialog, which ->\n                prefs.edit().putInt("icon_size_dp", values[which]).apply()\n                dialog.dismiss()\n                render()\n            }.setNegativeButton("Cancel", null).show()\n    }\n\n    private fun dockPicker() {
+    private fun iconSizePicker() {
+        val sizes = arrayOf("Small", "Medium", "Large")
+        val values = intArrayOf(48, 58, 68)
+        val current = values.indexOf(iconSizeDp).coerceAtLeast(0)
+        AlertDialog.Builder(this).setTitle("Icon size")
+            .setSingleChoiceItems(sizes, current) { dialog, which ->
+                prefs.edit().putInt("icon_size_dp", values[which]).apply()
+                dialog.dismiss()
+                render()
+            }.setNegativeButton("Cancel", null).show()
+    }
+
+    private fun dockPicker() {
         val all = apps(); val current = dock().toSet()
         val labels = all.map { it.loadLabel(packageManager).toString() }.toTypedArray()
         val checked = BooleanArray(all.size) { all[it].activityInfo.packageName in current }
