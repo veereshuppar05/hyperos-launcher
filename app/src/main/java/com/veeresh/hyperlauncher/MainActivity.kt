@@ -31,14 +31,14 @@ class MainActivity : Activity() {
     private fun pinned(): MutableSet<String> = prefs.getStringSet("pinned", emptySet())?.toMutableSet() ?: mutableSetOf()
     private fun folderMap(): MutableMap<String, MutableSet<String>> {
         val result = mutableMapOf<String, MutableSet<String>>()
-        (prefs.getString("folders", "") ?: "").split("\\n").filter { it.contains("|") }.forEach { line ->
+        (prefs.getString("folders", "") ?: "").split("\n").filter { it.contains("|") }.forEach { line ->
             val parts = line.split("|", limit = 2)
             if (parts.size == 2) result[parts[0]] = parts[1].split(",").filter { it.isNotBlank() }.toMutableSet()
         }
         return result
     }
     private fun saveFolders(f: Map<String, Set<String>>) {
-        prefs.edit().putString("folders", f.entries.joinToString("\\n") { it.key + "|" + it.value.joinToString(",") }).apply()
+        prefs.edit().putString("folders", f.entries.joinToString("\n") { it.key + "|" + it.value.joinToString(",") }).apply()
     }
     private fun dock(): MutableList<String> = (prefs.getString("dock", "") ?: "").split(",").filter { it.isNotBlank() }.toMutableList()
 
@@ -131,7 +131,7 @@ class MainActivity : Activity() {
                 textSize = 14f
                 setTextColor(Color.LTGRAY)
             }, GridLayout.LayoutParams().apply {
-                width = resources.displayMetrics.widthPixels - dp(32)
+                this.width = resources.displayMetrics.widthPixels - dp(32)
                 height = dp(150)
             })
         }
