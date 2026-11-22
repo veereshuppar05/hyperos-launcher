@@ -233,15 +233,33 @@ class MainActivity : Activity() {
     }
 
     private fun openFolder(name: String, pkgs: Set<String>, all: List<ResolveInfo>) {
+        val content = LinearLayout(this).apply {
+            orientation = 1
+            setPadding(dp(12), dp(8), dp(12), dp(8))
+            background = bg(0xff242833.toInt(), 24)
+        }
         val box = GridLayout(this).apply { columnCount = 3 }
         all.filter { it.activityInfo.packageName in pkgs }.forEach { info ->
             val pkg = info.activityInfo.packageName
-            box.addView(TextView(this).apply {
-                text = info.loadLabel(packageManager).toString(); gravity = Gravity.CENTER; setTextColor(Color.WHITE)
+            val label = info.loadLabel(packageManager).toString()
+            val tile = LinearLayout(this).apply {
+                orientation = 1; gravity = Gravity.CENTER; setPadding(dp(4), dp(8), dp(4), dp(8))
                 setOnClickListener { launch(pkg) }
-            }, GridLayout.LayoutParams().apply { width = dp(100); height = dp(70) })
+            }
+            val iconView = TextView(this).apply {
+                gravity = Gravity.CENTER
+                val drawable = info.loadIcon(packageManager)
+                drawable.setBounds(0, 0, dp(44), dp(44))
+                setCompoundDrawables(null, drawable, null, null)
+            }
+            tile.addView(iconView, LinearLayout.LayoutParams(dp(64), dp(64)))
+            if (showLabels) tile.addView(TextView(this).apply {
+                text = label; textSize = 10.5f; gravity = Gravity.CENTER; setTextColor(Color.WHITE); maxLines = 2
+            }, LinearLayout.LayoutParams(-1, dp(34)))
+            box.addView(tile, GridLayout.LayoutParams().apply { width = dp(92); height = dp(if (showLabels) 108 else 78) })
         }
-        AlertDialog.Builder(this).setTitle(name).setView(box)
+        content.addView(box)
+        AlertDialog.Builder(this).setTitle(name).setView(content)
             .setNeutralButton("Manage") { _, _ -> folderManage(name) }
             .setPositiveButton("Close", null).show()
     }
