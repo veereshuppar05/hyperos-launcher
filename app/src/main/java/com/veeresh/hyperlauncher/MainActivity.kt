@@ -26,6 +26,7 @@ class MainActivity : Activity() {
     private val columns = 5
     private val prefs by lazy { getSharedPreferences("hyperlauncher", MODE_PRIVATE) }
     private val showLabels: Boolean get() = prefs.getBoolean("show_labels", true)
+    private val iconSizeDp: Int get() = prefs.getInt("icon_size_dp", 58)
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
     private fun bg(c: Int, r: Int) = GradientDrawable().apply { setColor(c); cornerRadius = dp(r).toFloat() }
@@ -147,14 +148,14 @@ class MainActivity : Activity() {
         }
         val icon = TextView(this).apply {
             gravity = Gravity.CENTER; background = bg(0xff2f3544.toInt(), 18)
-            val drawable = info.loadIcon(packageManager); drawable.setBounds(0, 0, dp(48), dp(48))
+            val drawable = info.loadIcon(packageManager); drawable.setBounds(0, 0, dp(iconSizeDp - 10), dp(iconSizeDp - 10))
             setCompoundDrawables(null, drawable, null, null)
         }
-        tile.addView(icon, LinearLayout.LayoutParams(dp(58), dp(58)))
+        tile.addView(icon, LinearLayout.LayoutParams(dp(iconSizeDp), dp(iconSizeDp)))
         if (showLabels) tile.addView(TextView(this).apply {
             text = label; textSize = 10.5f; gravity = Gravity.CENTER; setTextColor(Color.WHITE); maxLines = 2
         }, LinearLayout.LayoutParams(-1, dp(34)))
-        grid.addView(tile, GridLayout.LayoutParams().apply { this.width = width; height = dp(102) })
+        grid.addView(tile, GridLayout.LayoutParams().apply { this.width = width; height = dp(iconSizeDp + if (showLabels) 44 else 20) })
     }
 
     private fun folderTile(name: String, pkgs: Set<String>, all: List<ResolveInfo>) {
@@ -291,7 +292,7 @@ class MainActivity : Activity() {
             }.show()
     }
 
-    private fun dockPicker() {
+    private fun iconSizePicker() {\n        val sizes = arrayOf("Small", "Medium", "Large")\n        val values = intArrayOf(48, 58, 68)\n        val current = values.indexOf(iconSizeDp).coerceAtLeast(0)\n        AlertDialog.Builder(this).setTitle("Icon size")\n            .setSingleChoiceItems(sizes, current) { dialog, which ->\n                prefs.edit().putInt("icon_size_dp", values[which]).apply()\n                dialog.dismiss()\n                render()\n            }.setNegativeButton("Cancel", null).show()\n    }\n\n    private fun dockPicker() {
         val all = apps(); val current = dock().toSet()
         val labels = all.map { it.loadLabel(packageManager).toString() }.toTypedArray()
         val checked = BooleanArray(all.size) { all[it].activityInfo.packageName in current }
