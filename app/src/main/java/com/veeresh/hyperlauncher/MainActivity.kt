@@ -769,7 +769,7 @@ class MainActivity : Activity() {
         val homeLabelOption = if (showHomeLabels) "Hide home labels" else "Show home labels"
         val drawerLabelOption = if (showDrawerLabels) "Hide app drawer labels" else "Show app drawer labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape", "Folder preview layout", if (showFolderLabels) "Hide folder labels" else "Show folder labels", "Folder label size", "Folder app grid", "Opened folder background", "Opened folder shape", if (showFolderAppLabels) "Hide folder app labels" else "Show folder app labels", "Folder app sorting", "Opened folder icon size", "Opened folder app label size", "Wallpaper dimming", "Home icon background opacity", "Home label colour", "App drawer label colour", "Dock background shape", "Dock background opacity", "Dock label size", "Dock label colour", "Dock side padding", "Dock icon spacing", if (prefs.getBoolean("dock_label_bold", false)) "Dock label: Bold" else "Dock label: Regular", "Dock label background", "Dock icon opacity", "Dock vertical position", "Dock height", "Dock alignment", "Dock label shadow", "Dock icon-label spacing", "Dock label letter spacing", "Dock label opacity", "Dock label font style", "Dock label capitalization", "Dock label padding")) { _, index ->
+            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape", "Folder preview layout", if (showFolderLabels) "Hide folder labels" else "Show folder labels", "Folder label size", "Folder app grid", "Opened folder background", "Opened folder shape", if (showFolderAppLabels) "Hide folder app labels" else "Show folder app labels", "Folder app sorting", "Opened folder icon size", "Opened folder app label size", "Wallpaper dimming", "Home icon background opacity", "Home label colour", "App drawer label colour", "Dock background shape", "Dock background opacity", "Dock label size", "Dock label colour", "Dock side padding", "Dock icon spacing", if (prefs.getBoolean("dock_label_bold", false)) "Dock label: Bold" else "Dock label: Regular", "Dock label background", "Dock icon opacity", "Dock vertical position", "Dock height", "Dock alignment", "Dock label shadow", "Dock icon-label spacing", "Dock label letter spacing", "Dock label opacity", "Dock label font style", "Dock label capitalization", "Dock label padding", "Tap feedback")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> drawerGridPicker()
@@ -829,6 +829,7 @@ class MainActivity : Activity() {
                     52 -> dockLabelFontPicker()
                     53 -> dockLabelCapitalizationPicker()
                     54 -> dockLabelPaddingPicker()
+                    55 -> tapFeedbackPicker()
                 }
             }.show()
     }
@@ -1233,6 +1234,17 @@ class MainActivity : Activity() {
     }
 
 
+    private fun tapFeedbackPicker() {
+        val options = arrayOf("Off", "Scale", "Bounce")
+        val current = prefs.getInt("tap_feedback_style", 1).coerceIn(0, 2)
+        AlertDialog.Builder(this).setTitle("Tap feedback")
+            .setSingleChoiceItems(options, current) { dialog, which ->
+                prefs.edit().putInt("tap_feedback_style", which).apply()
+                dialog.dismiss()
+                Toast.makeText(this, "Tap feedback updated", Toast.LENGTH_SHORT).show()
+            }.setNegativeButton("Cancel", null).show()
+    }
+
     private fun dockLabelPaddingPicker() {
         val options = arrayOf("Compact (1 dp)", "Standard (3 dp)", "Wide (5 dp)")
         val current = prefs.getInt("dock_label_padding", 1).coerceIn(0, 2)
@@ -1548,9 +1560,16 @@ class MainActivity : Activity() {
 
     private fun animateTap(view: android.view.View, action: () -> Unit) {
         view.animate().cancel()
-        view.animate().scaleX(0.94f).scaleY(0.94f).setDuration(85).withEndAction {
-            view.animate().scaleX(1f).scaleY(1f).setDuration(100)
-            action()
+        when (prefs.getInt("tap_feedback_style", 1).coerceIn(0, 2)) {
+            0 -> action()
+            1 -> view.animate().scaleX(0.94f).scaleY(0.94f).setDuration(85).withEndAction {
+                view.animate().scaleX(1f).scaleY(1f).setDuration(100)
+                action()
+            }
+            2 -> view.animate().translationY(dp(-4).toFloat()).scaleX(0.97f).scaleY(0.97f).setDuration(90).withEndAction {
+                view.animate().translationY(0f).scaleX(1f).scaleY(1f).setDuration(120)
+                action()
+            }
         }
     }
 
