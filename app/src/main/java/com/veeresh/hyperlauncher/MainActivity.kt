@@ -1818,15 +1818,19 @@ class MainActivity : Activity() {
         }
     }
 
+    private fun refreshAppCache() {
+        cachedApps = null
+        cachedAppSearchLabels = null
+        cachedAppSearchPackages = null
+        if (::grid.isInitialized) render()
+    }
+
     private fun launch(pkg: String) {
         val now = System.currentTimeMillis()
         if (pkg == lastLaunchPackage && now - lastLaunchTimeMs < 500L) return
         val intent = packageManager.getLaunchIntentForPackage(pkg)
         if (intent == null) {
-            cachedApps = null
-            cachedAppSearchLabels = null
-            cachedAppSearchPackages = null
-            if (::grid.isInitialized) render()
+            refreshAppCache()
             Toast.makeText(this, "App unavailable. App list refreshed.", Toast.LENGTH_SHORT).show()
             return
         }
@@ -1835,7 +1839,8 @@ class MainActivity : Activity() {
             lastLaunchPackage = pkg
             lastLaunchTimeMs = now
         } catch (_: android.content.ActivityNotFoundException) {
-            Toast.makeText(this, "Unable to open app", Toast.LENGTH_SHORT).show()
+            refreshAppCache()
+            Toast.makeText(this, "App unavailable. App list refreshed.", Toast.LENGTH_SHORT).show()
         } catch (_: SecurityException) {
             Toast.makeText(this, "Unable to open app", Toast.LENGTH_SHORT).show()
         }
