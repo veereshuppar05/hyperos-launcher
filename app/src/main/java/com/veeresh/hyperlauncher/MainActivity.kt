@@ -168,7 +168,7 @@ class MainActivity : Activity() {
         contentFrame.addView(alphabetRail, FrameLayout.LayoutParams(dp(26), -1, Gravity.END))
         root.addView(contentFrame, LinearLayout.LayoutParams(-1, 0, 1f))
         val dockBar = LinearLayout(this).apply {
-            gravity = Gravity.CENTER; orientation = 0; background = bg(0xff242833.toInt(), 24)
+            gravity = Gravity.CENTER; orientation = 0; background = dockBackground()
             setPadding(dp(6), dp(6), dp(6), dp(6))
         }
         root.addView(dockBar, LinearLayout.LayoutParams(-1, dp(60)))
@@ -568,7 +568,7 @@ class MainActivity : Activity() {
     private fun settings() {
         val labelOption = if (showLabels) "Hide app labels" else "Show app labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "App label size", "Home spacing", "Change wallpaper", "Reset wallpaper", labelOption, "Clear home pins", "Manage hidden apps", "Dock icon size")) { _, index ->
+            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "App label size", "Home spacing", "Change wallpaper", "Reset wallpaper", labelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> drawerGridPicker()
@@ -587,6 +587,7 @@ class MainActivity : Activity() {
                         .setNegativeButton("Cancel", null).show()
                     12 -> manageHiddenApps()
                     13 -> dockIconSizePicker()
+                    14 -> dockBackgroundPicker()
                 }
             }.show()
     }
@@ -728,11 +729,37 @@ class MainActivity : Activity() {
         }.setNegativeButton("Cancel", null).show()
     }
 
+    private fun dockBackgroundPicker() {
+        val options = arrayOf("Glass panel", "Transparent", "Outline", "Dark panel")
+        val current = prefs.getInt("dock_background_style", 0).coerceIn(0, options.lastIndex)
+        AlertDialog.Builder(this).setTitle("Dock background")
+            .setSingleChoiceItems(options, current) { dialog, which ->
+                prefs.edit().putInt("dock_background_style", which).apply()
+                dialog.dismiss()
+                refreshDock()
+            }.setNegativeButton("Cancel", null).show()
+    }
+
+    private fun dockBackground(): android.graphics.drawable.Drawable? {
+        return when (prefs.getInt("dock_background_style", 0)) {
+            1 -> null
+            2 -> GradientDrawable().apply {
+                setColor(0x222f3748)
+                setStroke(dp(1), 0xff596579.toInt())
+                cornerRadius = dp(24).toFloat()
+            }
+            3 -> bg(0xff151922.toInt(), 24)
+            else -> bg(0xff242833.toInt(), 24)
+        }
+    }
+
     private fun refreshDock() {
-        val parent = grid.parent?.parent as? LinearLayout ?: return
+        var ancestor: android.view.ViewParent? = grid.parent
+        while (ancestor != null && ancestor !is LinearLayout) ancestor = ancestor.parent
+        val parent = ancestor as? LinearLayout ?: return
         parent.removeViewAt(parent.childCount - 1)
         val bar = LinearLayout(this).apply {
-            orientation = 0; gravity = Gravity.CENTER; background = bg(0xff242833.toInt(), 24)
+            orientation = 0; gravity = Gravity.CENTER; background = dockBackground()
             setPadding(dp(6), dp(6), dp(6), dp(6))
         }
         parent.addView(bar, LinearLayout.LayoutParams(-1, dp(60)))
