@@ -402,10 +402,13 @@ class MainActivity : Activity() {
         }
         if (chosen.isEmpty() && !showingApps && query.isEmpty() && folders.isEmpty()) {
             grid.addView(TextView(this).apply {
-                text = "Home screen is empty. Open Apps and long-press an app to pin it."
+                text = "Home screen is empty.\\nTap here to open Apps, then long-press an app to pin it."
                 gravity = Gravity.CENTER
                 textSize = 14f
                 setTextColor(Color.LTGRAY)
+                contentDescription = "Home screen is empty. Open Apps to pin an app."
+                isClickable = true
+                setOnClickListener { switchPage(true) }
             }, GridLayout.LayoutParams().apply {
                 this.width = resources.displayMetrics.widthPixels - dp(32)
                 height = dp(150)
