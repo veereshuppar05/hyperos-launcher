@@ -1,4 +1,14 @@
-# HyperLauncher 1.0.0
+# HyperLauncher 1.0.1
+
+## HyperOS-inspired visual update
+
+- Reworked the home clock card: removed generic 'YOUR SPACE' branding and settings gear.
+- Automatically places common installed apps on the home screen and in the dock on first launch, so the home page is not blank. Existing user layouts are preserved.
+- Changed default home and drawer grids to four columns.
+- Added a horizontally scrolling category row based on categories present in the supplied Xiaomi launcher APK: Communication, Entertainment, Photography, Tools, Games, Travel, Finance & Business, Personalization, TV & Music and Video.
+- Added category filtering in the app drawer.
+
+## 1.0.0 release notes
 
 ## Release highlights
 
