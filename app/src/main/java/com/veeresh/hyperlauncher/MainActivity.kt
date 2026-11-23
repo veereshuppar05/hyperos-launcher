@@ -281,9 +281,10 @@ class MainActivity : Activity() {
         val pkg = info.activityInfo.packageName
         val label = info.loadLabel(packageManager).toString()
         val drawerMode = showingApps || search.text.isNotEmpty()
+        val homeSpacing = prefs.getInt("home_tile_spacing", 8)
         val tile = LinearLayout(this).apply {
             orientation = 1; gravity = Gravity.CENTER
-            setPadding(dp(3), dp(if (drawerMode) 4 else 8), dp(3), dp(if (drawerMode) 4 else 8))
+            setPadding(dp(3), dp(if (drawerMode) 4 else homeSpacing), dp(3), dp(if (drawerMode) 4 else homeSpacing))
             setOnClickListener { animateTap(this) { launch(pkg) } }
             setOnLongClickListener { appMenu(pkg, label); true }
         }
@@ -303,7 +304,7 @@ class MainActivity : Activity() {
         }, LinearLayout.LayoutParams(-1, dp(36)))
         grid.addView(tile, GridLayout.LayoutParams().apply {
             this.width = width
-            height = dp(displayIconSize + if (showLabels) 48 else 20)
+            height = dp(displayIconSize + if (showLabels) 48 else 20 + if (!drawerMode) homeSpacing * 2 else 0)
         })
     }
 
@@ -567,7 +568,7 @@ class MainActivity : Activity() {
     private fun settings() {
         val labelOption = if (showLabels) "Hide app labels" else "Show app labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "App label size", "Change wallpaper", "Reset wallpaper", labelOption, "Clear home pins", "Manage hidden apps", "Dock icon size")) { _, index ->
+            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "App label size", "Home spacing", "Change wallpaper", "Reset wallpaper", labelOption, "Clear home pins", "Manage hidden apps", "Dock icon size")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> drawerGridPicker()
@@ -576,15 +577,16 @@ class MainActivity : Activity() {
                     4 -> iconSizePicker()
                     5 -> drawerIconSizePicker()
                     6 -> appLabelSizePicker()
-                    7 -> chooseWallpaper()
-                    8 -> { prefs.edit().remove("wallpaper_uri").apply(); recreate() }
-                    9 -> { prefs.edit().putBoolean("show_labels", !showLabels).apply(); render() }
-                    10 -> AlertDialog.Builder(this).setTitle("Clear home pins?")
+                    7 -> homeSpacingPicker()
+                    8 -> chooseWallpaper()
+                    9 -> { prefs.edit().remove("wallpaper_uri").apply(); recreate() }
+                    10 -> { prefs.edit().putBoolean("show_labels", !showLabels).apply(); render() }
+                    11 -> AlertDialog.Builder(this).setTitle("Clear home pins?")
                         .setMessage("Remove all pinned apps from the Home tab?")
                         .setPositiveButton("Clear") { _, _ -> prefs.edit().putStringSet("pinned", emptySet()).apply(); render() }
                         .setNegativeButton("Cancel", null).show()
-                    11 -> manageHiddenApps()
-                    12 -> dockIconSizePicker()
+                    12 -> manageHiddenApps()
+                    13 -> dockIconSizePicker()
                 }
             }.show()
     }
@@ -682,6 +684,18 @@ class MainActivity : Activity() {
             }.setNegativeButton("Cancel", null).show()
     }
 
+
+    private fun homeSpacingPicker() {
+        val options = arrayOf("Compact", "Standard", "Relaxed")
+        val values = intArrayOf(4, 8, 12)
+        val current = values.indexOf(prefs.getInt("home_tile_spacing", 8)).coerceAtLeast(0)
+        AlertDialog.Builder(this).setTitle("Home spacing")
+            .setSingleChoiceItems(options, current) { dialog, which ->
+                prefs.edit().putInt("home_tile_spacing", values[which]).apply()
+                dialog.dismiss()
+                render()
+            }.setNegativeButton("Cancel", null).show()
+    }
 
     private fun dockIconSizePicker() {
         val options = arrayOf("Small (28 dp)", "Medium (34 dp)", "Large (40 dp)")
