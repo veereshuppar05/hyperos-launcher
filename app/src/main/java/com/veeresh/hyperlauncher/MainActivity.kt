@@ -124,10 +124,54 @@ class MainActivity : Activity() {
     }
     private fun dock(): MutableList<String> = (prefs.getString("dock", "") ?: "").split(",").filter { it.isNotBlank() }.toMutableList()
 
+    private var gestureStartX = 0f
+    private var gestureStartY = 0f
+
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        val handledByView = super.dispatchTouchEvent(event)
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                gestureStartX = event.rawX
+                gestureStartY = event.rawY
+            }
+            MotionEvent.ACTION_UP -> {
+                val deltaX = event.rawX - gestureStartX
+                val deltaY = event.rawY - gestureStartY
+                val absX = kotlin.math.abs(deltaX)
+                val absY = kotlin.math.abs(deltaY)
+                val inputMethod = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                val keyboardVisible = inputMethod.isAcceptingText
+                if (!keyboardVisible && !pageTransitioning) {
+                    when {
+                        absY > dp(105) && absY > absX * 1.25f &&
+                            prefs.getBoolean("vertical_swipe_gestures", true) -> {
+                            if (deltaY < 0 && !showingApps) {
+                                switchPage(true)
+                            } else if (deltaY > 0 && showingApps) {
+                                switchPage(false)
+                            }
+                        }
+                        absX > dp(95) && absX > absY * 1.25f -> {
+                            if (deltaX < 0 && !showingApps) {
+                                switchPage(true)
+                            } else if (deltaX > 0 && showingApps) {
+                                switchPage(false)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return handledByView
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.statusBarColor = Color.rgb(18, 20, 27)
         window.navigationBarColor = Color.rgb(18, 20, 27)
+        if (android.os.Build.VERSION.SDK_INT >= 29) {
+            window.isNavigationBarContrastEnforced = false
+        }
         buildUi()
         render()
     }
@@ -137,6 +181,17 @@ class MainActivity : Activity() {
             orientation = 1
             setPadding(dp(16), dp(10), dp(16), dp(8))
             background = wallpaperDrawable() ?: bg(Color.rgb(18, 20, 27), 0)
+        }
+        // Keep launcher content clear of Android's status and navigation bars.
+        // This is important on Android 15+, where edge-to-edge is enforced.
+        root.setOnApplyWindowInsetsListener { view, insets ->
+            view.setPadding(
+                dp(16),
+                insets.systemWindowInsetTop + dp(10),
+                dp(16),
+                dp(8) + insets.systemWindowInsetBottom
+            )
+            insets.consumeSystemWindowInsets()
         }
 
         // A compact, live clock card gives the home page a more HyperOS-like
@@ -289,50 +344,6 @@ class MainActivity : Activity() {
         val scroll = ScrollView(this).apply {
             isVerticalScrollBarEnabled = false
             clipToPadding = false
-        }
-        var touchStartX = 0f
-        var touchStartY = 0f
-        var gestureHandled = false
-        scroll.setOnTouchListener { _, event ->
-            when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    touchStartX = event.x
-                    touchStartY = event.y
-                    gestureHandled = false
-                    false
-                }
-                MotionEvent.ACTION_MOVE -> {
-                    val deltaX = event.x - touchStartX
-                    val deltaY = event.y - touchStartY
-                    if (!gestureHandled && kotlin.math.abs(deltaX) > dp(90) &&
-                        kotlin.math.abs(deltaX) > kotlin.math.abs(deltaY) * 1.25f) {
-                        if (deltaX < 0 && !showingApps) {
-                            gestureHandled = true
-                            switchPage(true)
-                        } else if (deltaX > 0 && showingApps) {
-                            gestureHandled = true
-                            switchPage(false)
-                        }
-                    } else if (!gestureHandled && prefs.getBoolean("vertical_swipe_gestures", true) &&
-                        kotlin.math.abs(deltaY) > dp(100) &&
-                        kotlin.math.abs(deltaY) > kotlin.math.abs(deltaX) * 1.3f) {
-                        if (deltaY < 0 && !showingApps) {
-                            gestureHandled = true
-                            switchPage(true)
-                        } else if (deltaY > 0 && showingApps) {
-                            gestureHandled = true
-                            switchPage(false)
-                        }
-                    }
-                    gestureHandled
-                }
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    val handled = gestureHandled
-                    gestureHandled = false
-                    handled
-                }
-                else -> gestureHandled
-            }
         }
         appScroll = scroll
         scroll.isLongClickable = true
@@ -1104,7 +1115,7 @@ class MainActivity : Activity() {
         val homeLabelOption = if (showHomeLabels) "Hide home labels" else "Show home labels"
         val drawerLabelOption = if (showDrawerLabels) "Hide app drawer labels" else "Show app drawer labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape", "Folder preview layout", if (showFolderLabels) "Hide folder labels" else "Show folder labels", "Folder label size", "Folder app grid", "Opened folder background", "Opened folder shape", if (showFolderAppLabels) "Hide folder app labels" else "Show folder app labels", "Folder app sorting", "Opened folder icon size", "Opened folder app label size", "Wallpaper dimming", "Home icon background opacity", "Home label colour", "App drawer label colour", "Dock background shape", "Dock background opacity", "Dock label size", "Dock label colour", "Dock side padding", "Dock icon spacing", if (prefs.getBoolean("dock_label_bold", false)) "Dock label: Bold" else "Dock label: Regular", "Dock label background", "Dock icon opacity", "Dock vertical position", "Dock height", "Dock alignment", "Dock label shadow", "Dock icon-label spacing", "Dock label letter spacing", "Dock label opacity", "Dock label font style", "Dock label capitalization", "Dock label padding", "Tap feedback", "Vertical swipe gestures", "Home icon opacity", "App drawer icon opacity", if (prefs.getBoolean("tap_vibration", false)) "Disable tap vibration" else "Enable tap vibration")) { _, index ->
+            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape", "Folder preview layout", if (showFolderLabels) "Hide folder labels" else "Show folder labels", "Folder label size", "Folder app grid", "Opened folder background", "Opened folder shape", if (showFolderAppLabels) "Hide folder app labels" else "Show folder app labels", "Folder app sorting", "Opened folder icon size", "Opened folder app label size", "Wallpaper dimming", "Home icon background opacity", "Home label colour", "App drawer label colour", "Dock background shape", "Dock background opacity", "Dock label size", "Dock label colour", "Dock side padding", "Dock icon spacing", if (prefs.getBoolean("dock_label_bold", false)) "Dock label: Bold" else "Dock label: Regular", "Dock label background", "Dock icon opacity", "Dock vertical position", "Dock height", "Dock alignment", "Dock label shadow", "Dock icon-label spacing", "Dock label letter spacing", "Dock label opacity", "Dock label font style", "Dock label capitalization", "Dock label padding", "Tap feedback", "Vertical swipe gestures", "Home icon opacity", "App drawer icon opacity", if (prefs.getBoolean("tap_vibration", false)) "Disable tap vibration" else "Enable tap vibration", "About HyperLauncher")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> drawerGridPicker()
@@ -1169,8 +1180,22 @@ class MainActivity : Activity() {
                     57 -> homeIconOpacityPicker()
                     58 -> drawerIconOpacityPicker()
                     59 -> { prefs.edit().putBoolean("tap_vibration", !prefs.getBoolean("tap_vibration", false)).apply(); Toast.makeText(this, if (prefs.getBoolean("tap_vibration", false)) "Tap vibration enabled" else "Tap vibration disabled", Toast.LENGTH_SHORT).show() }
+                    60 -> aboutLauncher()
                 }
             }.show()
+    }
+
+    private fun aboutLauncher() {
+        val version = try {
+            packageManager.getPackageInfo(packageName, 0).versionName ?: "1.0.0"
+        } catch (_: Exception) { "1.0.0" }
+        AlertDialog.Builder(this)
+            .setTitle("HyperLauncher")
+            .setMessage(
+                "Version $version\n\nA lightweight, customizable Android home screen with app search, folders, hidden apps, wallpaper support, dock controls and swipe navigation.\n\nDesigned for Android devices, including Motorola phones. Xiaomi-only system services and proprietary MIUI widgets are not included."
+            )
+            .setPositiveButton("OK", null)
+            .show()
     }
 
     private fun manageHiddenApps() {
