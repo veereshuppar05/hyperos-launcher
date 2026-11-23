@@ -38,6 +38,7 @@ class MainActivity : Activity() {
     private val showLabels: Boolean get() = prefs.getBoolean("show_labels", true)
     private val iconSizeDp: Int get() = prefs.getInt("icon_size_dp", 58)
     private val drawerIconSizeDp: Int get() = prefs.getInt("drawer_icon_size_dp", 64)
+    private val labelSize: Float get() = prefs.getFloat("label_size_sp", 11f)
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
     private fun bg(c: Int, r: Int) = GradientDrawable().apply { setColor(c); cornerRadius = dp(r).toFloat() }
@@ -289,7 +290,7 @@ class MainActivity : Activity() {
         }
         tile.addView(icon, LinearLayout.LayoutParams(dp(displayIconSize), dp(displayIconSize)))
         if (showLabels) tile.addView(TextView(this).apply {
-            text = label; textSize = if (drawer) 11.5f else 10.5f
+            text = label; textSize = if (drawer) labelSize + 0.5f else labelSize - 0.5f
             gravity = Gravity.CENTER; setTextColor(Color.WHITE); maxLines = 2
         }, LinearLayout.LayoutParams(-1, dp(36)))
         grid.addView(tile, GridLayout.LayoutParams().apply {
@@ -545,7 +546,7 @@ class MainActivity : Activity() {
     private fun settings() {
         val labelOption = if (showLabels) "Hide app labels" else "Show app labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Icon size", "App drawer icon size", "Change wallpaper", "Reset wallpaper", labelOption, "Clear home pins", "Manage hidden apps")) { _, index ->
+            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "App label size", "Change wallpaper", "Reset wallpaper", labelOption, "Clear home pins", "Manage hidden apps")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> drawerGridPicker()
@@ -553,14 +554,15 @@ class MainActivity : Activity() {
                     3 -> dockPicker()
                     4 -> iconSizePicker()
                     5 -> drawerIconSizePicker()
-                    6 -> chooseWallpaper()
-                    7 -> { prefs.edit().remove("wallpaper_uri").apply(); recreate() }
-                    8 -> { prefs.edit().putBoolean("show_labels", !showLabels).apply(); render() }
-                    9 -> AlertDialog.Builder(this).setTitle("Clear home pins?")
+                    6 -> appLabelSizePicker()
+                    7 -> chooseWallpaper()
+                    8 -> { prefs.edit().remove("wallpaper_uri").apply(); recreate() }
+                    9 -> { prefs.edit().putBoolean("show_labels", !showLabels).apply(); render() }
+                    10 -> AlertDialog.Builder(this).setTitle("Clear home pins?")
                         .setMessage("Remove all pinned apps from the Home tab?")
                         .setPositiveButton("Clear") { _, _ -> prefs.edit().putStringSet("pinned", emptySet()).apply(); render() }
                         .setNegativeButton("Cancel", null).show()
-                    10 -> manageHiddenApps()
+                    11 -> manageHiddenApps()
                 }
             }.show()
     }
@@ -629,6 +631,18 @@ class MainActivity : Activity() {
         AlertDialog.Builder(this).setTitle("Icon size")
             .setSingleChoiceItems(sizes, current) { dialog, which ->
                 prefs.edit().putInt("icon_size_dp", values[which]).apply()
+                dialog.dismiss()
+                render()
+            }.setNegativeButton("Cancel", null).show()
+    }
+
+    private fun appLabelSizePicker() {
+        val options = arrayOf("Small", "Medium", "Large")
+        val values = floatArrayOf(10f, 11f, 12f)
+        val current = values.indexOf(labelSize).coerceAtLeast(0)
+        AlertDialog.Builder(this).setTitle("App label size")
+            .setSingleChoiceItems(options, current) { dialog, which ->
+                prefs.edit().putFloat("label_size_sp", values[which]).apply()
                 dialog.dismiss()
                 render()
             }.setNegativeButton("Cancel", null).show()
