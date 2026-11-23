@@ -257,8 +257,12 @@ class MainActivity : Activity() {
     }
 
     private fun switchPage(toApps: Boolean) {
-        if (pageTransitioning || showingApps == toApps) {
-            if (!toApps && search.text.isNotEmpty()) search.setText("")
+        if (pageTransitioning) return
+        if (showingApps == toApps) {
+            if (toApps && search.text.isNotEmpty()) {
+                search.setText("")
+                appScroll.scrollTo(0, 0)
+            }
             return
         }
         pageTransitioning = true
