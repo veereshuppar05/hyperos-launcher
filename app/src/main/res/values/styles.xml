@@ -1,0 +1,11 @@
+<resources>
+    <style name="Theme.HyperLauncher" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">#AFC5EB</item>
+        <item name="android:statusBarColor">#12141B</item>
+        <item name="android:navigationBarColor">#12141B</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowBackground">#12141B</item>
+        <item name="android:windowActionModeOverlay">true</item>
+    </style>
+</resources>
