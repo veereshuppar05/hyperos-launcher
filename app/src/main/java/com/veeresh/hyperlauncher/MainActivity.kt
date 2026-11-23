@@ -264,18 +264,25 @@ class MainActivity : Activity() {
     }
 
     private fun openFolder(name: String, pkgs: Set<String>, all: List<ResolveInfo>) {
+        val dialog = android.app.Dialog(this)
         val content = LinearLayout(this).apply {
             orientation = 1
-            setPadding(dp(12), dp(8), dp(12), dp(8))
-            background = bg(0xff242833.toInt(), 24)
+            setPadding(dp(18), dp(18), dp(18), dp(12))
+            background = bg(0xff20242d.toInt(), 28)
+            alpha = 0f
+            scaleX = 0.82f
+            scaleY = 0.82f
         }
+        content.addView(TextView(this).apply {
+            text = name; textSize = 20f; setTextColor(Color.WHITE); gravity = Gravity.CENTER
+        }, LinearLayout.LayoutParams(-1, dp(44)))
         val box = GridLayout(this).apply { columnCount = 3 }
         all.filter { it.activityInfo.packageName in pkgs }.forEach { info ->
             val pkg = info.activityInfo.packageName
             val label = info.loadLabel(packageManager).toString()
             val tile = LinearLayout(this).apply {
                 orientation = 1; gravity = Gravity.CENTER; setPadding(dp(4), dp(8), dp(4), dp(8))
-                setOnClickListener { animateTap(this) { launch(pkg) } }
+                setOnClickListener { dialog.dismiss(); animateTap(this) { launch(pkg) } }
             }
             val iconView = TextView(this).apply {
                 gravity = Gravity.CENTER
@@ -290,9 +297,25 @@ class MainActivity : Activity() {
             box.addView(tile, GridLayout.LayoutParams().apply { width = dp(92); height = dp(if (showLabels) 108 else 78) })
         }
         content.addView(box)
-        AlertDialog.Builder(this).setTitle(name).setView(content)
-            .setNeutralButton("Manage") { _, _ -> folderManage(name) }
-            .setPositiveButton("Close", null).show()
+        val actions = LinearLayout(this).apply { gravity = Gravity.CENTER; setPadding(0, dp(8), 0, 0) }
+        actions.addView(TextView(this).apply {
+            text = "Manage"; textSize = 14f; setTextColor(0xffb8c7ff.toInt(); gravity = Gravity.CENTER
+            setPadding(dp(20), dp(10), dp(20), dp(10))
+            setOnClickListener { dialog.dismiss(); folderManage(name) }
+        })
+        actions.addView(TextView(this).apply {
+            text = "Close"; textSize = 14f; setTextColor(Color.WHITE); gravity = Gravity.CENTER
+            setPadding(dp(20), dp(10), dp(20), dp(10))
+            setOnClickListener { dialog.dismiss() }
+        })
+        content.addView(actions)
+        dialog.setContentView(content)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.show()
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.window?.setLayout(dp(320), -2)
+        content.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(220)
+            .setInterpolator(android.view.animation.DecelerateInterpolator()).start()
     }
 
     private fun folderManage(name: String) {
