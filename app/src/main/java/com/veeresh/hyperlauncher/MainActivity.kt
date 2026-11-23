@@ -40,6 +40,7 @@ class MainActivity : Activity() {
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
     private fun bg(c: Int, r: Int) = GradientDrawable().apply { setColor(c); cornerRadius = dp(r).toFloat() }
     private fun pinned(): MutableSet<String> = prefs.getStringSet("pinned", emptySet())?.toMutableSet() ?: mutableSetOf()
+    private fun hidden(): MutableSet<String> = prefs.getStringSet("hidden_apps", emptySet())?.toMutableSet() ?: mutableSetOf()
     private fun folderMap(): MutableMap<String, MutableSet<String>> {
         val result = mutableMapOf<String, MutableSet<String>>()
         (prefs.getString("folders", "") ?: "").split("\n").filter { it.contains("|") }.forEach { line ->
@@ -200,7 +201,7 @@ class MainActivity : Activity() {
 
     private fun apps(): List<ResolveInfo> = packageManager
         .queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), PackageManager.MATCH_ALL)
-        .filter { it.activityInfo.packageName != packageName }
+        .filter { it.activityInfo.packageName != packageName && it.activityInfo.packageName !in hidden() }
         .distinctBy { it.activityInfo.packageName }
         .sortedBy { it.loadLabel(packageManager).toString().lowercase() }
 
@@ -322,7 +323,8 @@ class MainActivity : Activity() {
 
     private fun appMenu(pkg: String, label: String) {
         val isPinned = pkg in pinned()
-        val options = mutableListOf("Open", if (isPinned) "Unpin from Home" else "Pin to Home", "App info", "Uninstall")
+        val isHidden = pkg in hidden()
+        val options = mutableListOf("Open", if (isPinned) "Unpin from Home" else "Pin to Home", "App info", "Uninstall", if (isHidden) "Unhide app" else "Hide app")
         if (isPinned) options.add("Create folder")
         options.add(if (pkg in dock()) "Remove from Dock" else "Add to Dock")
         AlertDialog.Builder(this).setTitle(label).setItems(options.toTypedArray()) { _, index ->
@@ -333,6 +335,7 @@ class MainActivity : Activity() {
                     prefs.edit().putStringSet("pinned", set).apply(); render()
                 }
                 "App info" -> startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$pkg")))
+                "Hide app", "Unhide app" -> { val set = hidden(); if (isHidden) set.remove(pkg) else set.add(pkg); prefs.edit().putStringSet("hidden_apps", set).apply(); render() }
                 "Uninstall" -> startActivity(Intent(Intent.ACTION_DELETE, Uri.parse("package:$pkg")))
                 "Create folder" -> createFolder(pkg)
                 "Add to Dock" -> {
@@ -527,7 +530,7 @@ class MainActivity : Activity() {
     private fun settings() {
         val labelOption = if (showLabels) "Hide app labels" else "Show app labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Home grid", "Customize dock", "Icon size", "Change wallpaper", "Reset wallpaper", labelOption, "Clear home pins")) { _, index ->
+            .setItems(arrayOf("Home grid", "Customize dock", "Icon size", "Change wallpaper", "Reset wallpaper", labelOption, "Clear home pins", "Manage hidden apps")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> dockPicker()
@@ -539,8 +542,30 @@ class MainActivity : Activity() {
                         .setMessage("Remove all pinned apps from the Home tab?")
                         .setPositiveButton("Clear") { _, _ -> prefs.edit().putStringSet("pinned", emptySet()).apply(); render() }
                         .setNegativeButton("Cancel", null).show()
+                    7 -> manageHiddenApps()
                 }
             }.show()
+    }
+
+    private fun manageHiddenApps() {
+        val all = packageManager.queryIntentActivities(
+            Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), PackageManager.MATCH_ALL
+        ).filter { it.activityInfo.packageName != packageName }
+            .distinctBy { it.activityInfo.packageName }
+            .sortedBy { it.loadLabel(packageManager).toString().lowercase() }
+        val labels = all.map { it.loadLabel(packageManager).toString() }.toTypedArray()
+        val current = hidden()
+        val checked = BooleanArray(all.size) { all[it].activityInfo.packageName in current }
+        val selected = current.toMutableSet()
+        AlertDialog.Builder(this).setTitle("Hide apps")
+            .setMultiChoiceItems(labels, checked) { _, index, isChecked ->
+                val pkg = all[index].activityInfo.packageName
+                if (isChecked) selected.add(pkg) else selected.remove(pkg)
+            }
+            .setPositiveButton("Save") { _, _ ->
+                prefs.edit().putStringSet("hidden_apps", selected).apply()
+                render()
+            }.setNegativeButton("Cancel", null).show()
     }
 
     private fun homeGridPicker() {
