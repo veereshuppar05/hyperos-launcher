@@ -619,7 +619,7 @@ class MainActivity : Activity() {
         val homeLabelOption = if (showHomeLabels) "Hide home labels" else "Show home labels"
         val drawerLabelOption = if (showDrawerLabels) "Hide app drawer labels" else "Show app drawer labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape", "Folder preview layout", if (showFolderLabels) "Hide folder labels" else "Show folder labels", "Folder label size", "Folder app grid", "Opened folder background")) { _, index ->
+            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape", "Folder preview layout", if (showFolderLabels) "Hide folder labels" else "Show folder labels", "Folder label size", "Folder app grid", "Opened folder background", "Opened folder shape")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> drawerGridPicker()
@@ -651,6 +651,7 @@ class MainActivity : Activity() {
                     24 -> folderLabelSizePicker()
                     25 -> folderOpenGridPicker()
                     26 -> openedFolderBackgroundPicker()
+                    27 -> openedFolderShapePicker()
                 }
             }.show()
     }
@@ -685,8 +686,26 @@ class MainActivity : Activity() {
             0xff402a34.toInt(),
             0xff403322.toInt()
         )
-        val style = prefs.getInt("opened_folder_background", 0)
-        return if (style == 6) null else bg(colors[style.coerceIn(0, colors.lastIndex)], 28)
+        val colorStyle = prefs.getInt("opened_folder_background", 0)
+        if (colorStyle == 6) return null
+        val radius = when (prefs.getInt("opened_folder_shape", 0)) {
+            1 -> 20
+            2 -> 10
+            3 -> 0
+            else -> 28
+        }
+        return bg(colors[colorStyle.coerceIn(0, colors.lastIndex)], radius)
+    }
+
+    private fun openedFolderShapePicker() {
+        val options = arrayOf("Extra rounded", "Squircle", "Rounded", "Square")
+        val current = prefs.getInt("opened_folder_shape", 0).coerceIn(0, options.lastIndex)
+        AlertDialog.Builder(this).setTitle("Opened folder shape")
+            .setSingleChoiceItems(options, current) { dialog, which ->
+                prefs.edit().putInt("opened_folder_shape", which).apply()
+                dialog.dismiss()
+                Toast.makeText(this, "Folder shape updated", Toast.LENGTH_SHORT).show()
+            }.setNegativeButton("Cancel", null).show()
     }
 
     private fun openedFolderBackgroundPicker() {
