@@ -38,6 +38,7 @@ class MainActivity : Activity() {
     private val showLabels: Boolean get() = prefs.getBoolean("show_labels", true)
     private val iconSizeDp: Int get() = prefs.getInt("icon_size_dp", 58)
     private val drawerIconSizeDp: Int get() = prefs.getInt("drawer_icon_size_dp", 64)
+    private val dockIconSizeDp: Int get() = prefs.getInt("dock_icon_size_dp", 34)
     private val labelSize: Float get() = prefs.getFloat("label_size_sp", 11f)
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
@@ -566,7 +567,7 @@ class MainActivity : Activity() {
     private fun settings() {
         val labelOption = if (showLabels) "Hide app labels" else "Show app labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "App label size", "Change wallpaper", "Reset wallpaper", labelOption, "Clear home pins", "Manage hidden apps")) { _, index ->
+            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "App label size", "Change wallpaper", "Reset wallpaper", labelOption, "Clear home pins", "Manage hidden apps", "Dock icon size")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> drawerGridPicker()
@@ -583,6 +584,7 @@ class MainActivity : Activity() {
                         .setPositiveButton("Clear") { _, _ -> prefs.edit().putStringSet("pinned", emptySet()).apply(); render() }
                         .setNegativeButton("Cancel", null).show()
                     11 -> manageHiddenApps()
+                    12 -> dockIconSizePicker()
                 }
             }.show()
     }
@@ -681,6 +683,18 @@ class MainActivity : Activity() {
     }
 
 
+    private fun dockIconSizePicker() {
+        val options = arrayOf("Small (28 dp)", "Medium (34 dp)", "Large (40 dp)")
+        val values = intArrayOf(28, 34, 40)
+        val current = values.indexOf(dockIconSizeDp).coerceAtLeast(0)
+        AlertDialog.Builder(this).setTitle("Dock icon size")
+            .setSingleChoiceItems(options, current) { dialog, which ->
+                prefs.edit().putInt("dock_icon_size_dp", values[which]).apply()
+                dialog.dismiss()
+                refreshDock()
+            }.setNegativeButton("Cancel", null).show()
+    }
+
     private fun dockPicker() {
         val all = apps(); val current = dock().toSet()
         val labels = all.map { it.loadLabel(packageManager).toString() }.toTypedArray()
@@ -726,7 +740,7 @@ class MainActivity : Activity() {
             val info = apps().firstOrNull { it.activityInfo.packageName == pkg }
             if (info != null) bar.addView(TextView(this).apply {
                 gravity = Gravity.CENTER
-                val drawable = info.loadIcon(packageManager); drawable.setBounds(0, 0, dp(34), dp(34))
+                val drawable = info.loadIcon(packageManager); drawable.setBounds(0, 0, dp(dockIconSizeDp), dp(dockIconSizeDp))
                 setCompoundDrawables(null, drawable, null, null)
                 setOnClickListener { animateTap(this) { launch(pkg) } }
                 setOnLongClickListener { appMenu(pkg, info.loadLabel(packageManager).toString()); true }
