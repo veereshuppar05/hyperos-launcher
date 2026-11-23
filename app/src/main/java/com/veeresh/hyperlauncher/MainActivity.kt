@@ -27,6 +27,7 @@ class MainActivity : Activity() {
     private lateinit var grid: GridLayout
     private lateinit var search: EditText
     private var showingApps = false
+    private var pageTransitioning = false
     private val columns: Int get() = prefs.getInt("grid_columns", 5)
     private val prefs by lazy { getSharedPreferences("hyperlauncher", MODE_PRIVATE) }
     private val showLabels: Boolean get() = prefs.getBoolean("show_labels", true)
@@ -81,8 +82,8 @@ class MainActivity : Activity() {
         root.addView(search, LinearLayout.LayoutParams(-1, dp(48)).apply { topMargin = dp(12) })
 
         val tabs = LinearLayout(this).apply { orientation = 0; setPadding(0, dp(10), 0, dp(8)) }
-        tabs.addView(tab("Home") { showingApps = false; search.setText(""); render() }, LinearLayout.LayoutParams(0, dp(40), 1f))
-        tabs.addView(tab("Apps") { showingApps = true; render() }, LinearLayout.LayoutParams(0, dp(40), 1f))
+        tabs.addView(tab("Home") { switchPage(false) }, LinearLayout.LayoutParams(0, dp(40), 1f))
+        tabs.addView(tab("Apps") { switchPage(true) }, LinearLayout.LayoutParams(0, dp(40), 1f))
         root.addView(tabs)
 
         val scroll = ScrollView(this)
@@ -100,13 +101,9 @@ class MainActivity : Activity() {
                     if (kotlin.math.abs(deltaX) > dp(90) &&
                         kotlin.math.abs(deltaX) > kotlin.math.abs(deltaY) * 1.25f) {
                         if (deltaX < 0 && !showingApps) {
-                            showingApps = true
-                            search.setText("")
-                            render()
+                            switchPage(true)
                         } else if (deltaX > 0 && showingApps) {
-                            showingApps = false
-                            search.setText("")
-                            render()
+                            switchPage(false)
                         }
                     }
                 }
@@ -127,11 +124,31 @@ class MainActivity : Activity() {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 if (!s.isNullOrEmpty()) showingApps = true
-                render()
+                if (!pageTransitioning) render()
             }
             override fun afterTextChanged(s: Editable?) {}
         })
         updateDock(dockBar)
+    }
+
+    private fun switchPage(toApps: Boolean) {
+        if (pageTransitioning || showingApps == toApps) {
+            if (!toApps && search.text.isNotEmpty()) search.setText("")
+            return
+        }
+        pageTransitioning = true
+        val direction = if (toApps) -1f else 1f
+        grid.animate().cancel()
+        grid.animate().alpha(0f).translationX(dp(24 * direction)).setDuration(110)
+            .setInterpolator(android.view.animation.AccelerateInterpolator()).withEndAction {
+                showingApps = toApps
+                pageTransitioning = false
+                if (search.text.isNotEmpty()) search.setText("") else render()
+                grid.alpha = 0f
+                grid.translationX = dp(-24 * direction)
+                grid.animate().alpha(1f).translationX(0f).setDuration(190)
+                    .setInterpolator(android.view.animation.DecelerateInterpolator()).start()
+            }.start()
     }
 
     private fun tab(label: String, action: () -> Unit) = TextView(this).apply {
