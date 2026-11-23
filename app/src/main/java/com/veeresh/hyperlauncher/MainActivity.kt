@@ -336,7 +336,7 @@ class MainActivity : Activity() {
             clipToPadding = false
             visibility = android.view.View.GONE
             setPadding(0, 0, 0, dp(8))
-            addView(categoryRow, HorizontalScrollView.LayoutParams(-2, dp(36)))
+            addView(categoryRow, FrameLayout.LayoutParams(-2, dp(36)))
         }
         root.addView(categoryScroll, LinearLayout.LayoutParams(-1, dp(44)))
 
