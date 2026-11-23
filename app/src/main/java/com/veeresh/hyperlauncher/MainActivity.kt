@@ -1633,8 +1633,7 @@ class MainActivity : Activity() {
         when (prefs.getInt("tap_feedback_style", 1).coerceIn(0, 4)) {
             0 -> action()
             1 -> view.animate().scaleX(0.94f).scaleY(0.94f).setDuration(85).withEndAction {
-                view.animate().scaleX(1f).scaleY(1f).setDuration(100)
-                action()
+                view.animate().scaleX(1f).scaleY(1f).setDuration(100).withEndAction { action() }
             }
             2 -> view.animate().translationY(dp(-4).toFloat()).scaleX(0.97f).scaleY(0.97f).setDuration(90).withEndAction {
                 view.animate().translationY(0f).scaleX(1f).scaleY(1f).setDuration(120).withEndAction { action() }
