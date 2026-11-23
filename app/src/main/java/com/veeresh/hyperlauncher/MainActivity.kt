@@ -134,8 +134,15 @@ class MainActivity : Activity() {
                 if (event.action == MotionEvent.ACTION_DOWN || event.action == MotionEvent.ACTION_MOVE) {
                     val letters = sectionHeaders.keys.sorted().toList()
                     if (letters.isNotEmpty()) {
-                        val index = ((event.y / height.coerceAtLeast(1)) * letters.size).toInt().coerceIn(0, letters.lastIndex)
-                        sectionHeaders[letters[index]]?.let { appScroll.smoothScrollTo(0, it.top) }
+                        val alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ#"
+                        val railIndex = ((event.y / height.coerceAtLeast(1)) * alphabet.length)
+                            .toInt().coerceIn(0, alphabet.lastIndex)
+                        val target = alphabet[railIndex]
+                        val nearest = letters.minByOrNull { candidate ->
+                            if (target == '#') if (candidate == '#') 0 else 1000
+                            else if (candidate == '#') 1000 else kotlin.math.abs(candidate - target)
+                        } ?: target
+                        sectionHeaders[nearest]?.let { appScroll.smoothScrollTo(0, it.top) }
                     }
                     true
                 } else event.action == MotionEvent.ACTION_UP
