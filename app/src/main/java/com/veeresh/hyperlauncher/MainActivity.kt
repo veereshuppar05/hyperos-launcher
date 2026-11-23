@@ -119,6 +119,7 @@ class MainActivity : Activity() {
 
         search = EditText(this).apply {
             hint = if (showingApps) "Search all apps" else "Search apps"
+            contentDescription = if (showingApps) "Search all installed apps" else "Search apps on home screen"
             setHintTextColor(0xff9ba3b2.toInt()); setTextColor(Color.WHITE)
             setSingleLine(true); imeOptions = EditorInfo.IME_ACTION_SEARCH
             setPadding(dp(16), 0, dp(16), 0); background = bg(0xff272b36.toInt(), 24)
