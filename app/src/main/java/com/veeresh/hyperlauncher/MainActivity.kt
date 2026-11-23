@@ -33,6 +33,8 @@ class MainActivity : Activity() {
     private lateinit var search: EditText
     private var showingApps = false
     private var pageTransitioning = false
+    private var lastLaunchPackage: String? = null
+    private var lastLaunchTimeMs = 0L
     private val columns: Int get() = prefs.getInt("grid_columns", 5)
     private val drawerColumns: Int get() = prefs.getInt("drawer_columns", 5)
     private val prefs by lazy { getSharedPreferences("hyperlauncher", MODE_PRIVATE) }
@@ -1653,6 +1655,10 @@ class MainActivity : Activity() {
     }
 
     private fun launch(pkg: String) {
+        val now = System.currentTimeMillis()
+        if (pkg == lastLaunchPackage && now - lastLaunchTimeMs < 500L) return
+        lastLaunchPackage = pkg
+        lastLaunchTimeMs = now
         packageManager.getLaunchIntentForPackage(pkg)?.let { startActivity(it) } ?: Toast.makeText(this, "App unavailable", Toast.LENGTH_SHORT).show()
     }
 }
