@@ -1,15 +1,17 @@
-name: Build HyperLauncher APK
+name: HyperLauncher v1.0 Release
 
 on:
   workflow_dispatch:
   push:
-    branches: [ "main", "v0.3-development" ]
+    tags:
+      - "v1.0.0"
 
 permissions:
   contents: read
 
 jobs:
-  build:
+  release-apk:
+    name: Build and verify HyperLauncher v1.0 APK
     runs-on: ubuntu-latest
     steps:
       - name: Check out source
@@ -30,33 +32,37 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          echo "ANDROID_HOME=$ANDROID_HOME"
           SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
           if [ ! -x "$SDKMANAGER" ]; then
             SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -n 1)"
           fi
-          echo "Using sdkmanager: $SDKMANAGER"
           set +o pipefail
           yes | "$SDKMANAGER" --licenses >/dev/null
           set -o pipefail
           "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
-      - name: Build debug APK
-        run: gradle --no-daemon assembleDebug
+      - name: Build release APK
+        run: gradle --no-daemon clean assembleRelease
 
-      - name: Verify APK package and signature
+      - name: Verify release APK
         shell: bash
         run: |
           set -euo pipefail
-          APK="app/build/outputs/apk/debug/app-debug.apk"
+          APK="app/build/outputs/apk/release/app-release.apk"
           test -s "$APK"
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | grep -F "package: name='com.veeresh.hyperlauncher'"
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify "$APK"
-          echo "APK verified: $(du -h "$APK" | cut -f1)"
+          AAPT="$ANDROID_HOME/build-tools/35.0.0/aapt"
+          APKSIGNER="$ANDROID_HOME/build-tools/35.0.0/apksigner"
+          ZIPALIGN="$ANDROID_HOME/build-tools/35.0.0/zipalign"
+          BADGING="$("$AAPT" dump badging "$APK")"
+          echo "$BADGING" | grep -F "package: name='com.veeresh.hyperlauncher' versionCode='100' versionName='1.0.0'"
+          "$ZIPALIGN" -c -v 4 "$APK"
+          "$APKSIGNER" verify --verbose "$APK"
+          echo "Verified release APK: $(du -h "$APK" | cut -f1)"
 
-      - name: Upload APK
+      - name: Upload final v1.0 APK
         uses: actions/upload-artifact@v4
         with:
-          name: HyperLauncher-debug
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: HyperLauncher-v1.0
+          path: app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
+          retention-days: 90
