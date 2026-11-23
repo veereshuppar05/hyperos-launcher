@@ -36,6 +36,8 @@ class MainActivity : Activity() {
     private val drawerColumns: Int get() = prefs.getInt("drawer_columns", 5)
     private val prefs by lazy { getSharedPreferences("hyperlauncher", MODE_PRIVATE) }
     private val showLabels: Boolean get() = prefs.getBoolean("show_labels", true)
+    private val showHomeLabels: Boolean get() = prefs.getBoolean("home_show_labels", showLabels)
+    private val showDrawerLabels: Boolean get() = prefs.getBoolean("drawer_show_labels", showLabels)
     private val iconSizeDp: Int get() = prefs.getInt("icon_size_dp", 58)
     private val drawerIconSizeDp: Int get() = prefs.getInt("drawer_icon_size_dp", 64)
     private val dockIconSizeDp: Int get() = prefs.getInt("dock_icon_size_dp", 34)
@@ -300,13 +302,14 @@ class MainActivity : Activity() {
             setCompoundDrawables(null, drawable, null, null)
         }
         tile.addView(icon, LinearLayout.LayoutParams(dp(displayIconSize), dp(displayIconSize)))
-        if (showLabels) tile.addView(TextView(this).apply {
-            text = label; textSize = if (drawer) labelSize + 0.5f else labelSize - 0.5f
+        val itemHasLabels = if (drawerMode) showDrawerLabels else showHomeLabels
+        if (itemHasLabels) tile.addView(TextView(this).apply {
+            text = label; textSize = if (drawerMode) labelSize + 0.5f else labelSize - 0.5f
             gravity = Gravity.CENTER; setTextColor(Color.WHITE); maxLines = 2
         }, LinearLayout.LayoutParams(-1, dp(36)))
         grid.addView(tile, GridLayout.LayoutParams().apply {
             this.width = width
-            height = dp(displayIconSize + (if (showLabels) 48 else 20) + if (!drawerMode) homeSpacing * 2 else 0)
+            height = dp(displayIconSize + (if (itemHasLabels) 48 else 20) + if (!drawerMode) homeSpacing * 2 else 0)
         })
     }
 
@@ -421,10 +424,10 @@ class MainActivity : Activity() {
                 setCompoundDrawables(null, drawable, null, null)
             }
             tile.addView(iconView, LinearLayout.LayoutParams(dp(64), dp(64)))
-            if (showLabels) tile.addView(TextView(this).apply {
+            if (showHomeLabels) tile.addView(TextView(this).apply {
                 text = label; textSize = 10.5f; gravity = Gravity.CENTER; setTextColor(Color.WHITE); maxLines = 2
             }, LinearLayout.LayoutParams(-1, dp(34)))
-            box.addView(tile, GridLayout.LayoutParams().apply { width = dp(92); height = dp(if (showLabels) 108 else 78) })
+            box.addView(tile, GridLayout.LayoutParams().apply { width = dp(92); height = dp(if (showHomeLabels) 108 else 78) })
         }
         content.addView(box)
         val actions = LinearLayout(this).apply { gravity = Gravity.CENTER; setPadding(0, dp(8), 0, 0) }
@@ -568,9 +571,10 @@ class MainActivity : Activity() {
     }
 
     private fun settings() {
-        val labelOption = if (showLabels) "Hide app labels" else "Show app labels"
+        val homeLabelOption = if (showHomeLabels) "Hide home labels" else "Show home labels"
+        val drawerLabelOption = if (showDrawerLabels) "Hide app drawer labels" else "Show app drawer labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "App label size", "Home spacing", "Change wallpaper", "Reset wallpaper", labelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels")) { _, index ->
+            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "App label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> drawerGridPicker()
@@ -582,15 +586,16 @@ class MainActivity : Activity() {
                     7 -> homeSpacingPicker()
                     8 -> chooseWallpaper()
                     9 -> { prefs.edit().remove("wallpaper_uri").apply(); recreate() }
-                    10 -> { prefs.edit().putBoolean("show_labels", !showLabels).apply(); render() }
-                    11 -> AlertDialog.Builder(this).setTitle("Clear home pins?")
+                    10 -> { prefs.edit().putBoolean("home_show_labels", !showHomeLabels).apply(); render() }
+                    11 -> { prefs.edit().putBoolean("drawer_show_labels", !showDrawerLabels).apply(); render() }
+                    12 -> AlertDialog.Builder(this).setTitle("Clear home pins?")
                         .setMessage("Remove all pinned apps from the Home tab?")
                         .setPositiveButton("Clear") { _, _ -> prefs.edit().putStringSet("pinned", emptySet()).apply(); render() }
                         .setNegativeButton("Cancel", null).show()
-                    12 -> manageHiddenApps()
-                    13 -> dockIconSizePicker()
-                    14 -> dockBackgroundPicker()
-                    15 -> { prefs.edit().putBoolean("dock_show_labels", !dockShowLabels).apply(); refreshDock() }
+                    13 -> manageHiddenApps()
+                    14 -> dockIconSizePicker()
+                    15 -> dockBackgroundPicker()
+                    16 -> { prefs.edit().putBoolean("dock_show_labels", !dockShowLabels).apply(); refreshDock() }
                 }
             }.show()
     }
