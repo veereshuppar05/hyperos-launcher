@@ -236,9 +236,11 @@ class MainActivity : Activity() {
                         val nearest = if (target == '#') {
                             if ('#' in letters) '#' else letters.lastOrNull() ?: target
                         } else {
-                            letters.minByOrNull { candidate ->
-                                if (candidate == '#') 1000 else kotlin.math.abs(candidate - target)
-                            } ?: target
+                            val alphabetic = letters.filter { it in 'A'..'Z' }
+                            alphabetic.firstOrNull { it >= target }
+                                ?: alphabetic.lastOrNull()
+                                ?: letters.firstOrNull()
+                                ?: target
                         }
                         sectionHeaders[nearest]?.let { appScroll.smoothScrollTo(0, it.top) }
                     }
