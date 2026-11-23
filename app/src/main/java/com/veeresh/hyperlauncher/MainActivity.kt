@@ -573,7 +573,7 @@ class MainActivity : Activity() {
         }
         if (chosen.isEmpty() && !showingApps && query.isEmpty() && folders.isEmpty()) {
             grid.addView(TextView(this).apply {
-                text = "Home screen is empty.\\nTap here to open Apps, then long-press an app to pin it."
+                text = "Home screen is empty.\nTap here to open Apps, then long-press an app to pin it."
                 gravity = Gravity.CENTER
                 textSize = 14f
                 setTextColor(Color.LTGRAY)
