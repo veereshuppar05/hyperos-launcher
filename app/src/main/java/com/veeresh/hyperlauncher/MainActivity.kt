@@ -479,6 +479,10 @@ class MainActivity : Activity() {
                     orientation = 1; gravity = Gravity.CENTER
                     setPadding(dp(2), dp(6), dp(2), dp(6))
                     setOnClickListener { closeFolderDialog(dialog, content) { animateTap(this) { launch(pkg) } } }
+                    setOnLongClickListener {
+                        folderAppMenu(name, pkg, label, dialog, content)
+                        true
+                    }
                 }
                 val iconView = TextView(this).apply {
                     gravity = Gravity.CENTER
@@ -551,6 +555,75 @@ class MainActivity : Activity() {
         dialog.window?.setLayout(dp(dialogWidthDp), -2)
         content.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(220)
             .setInterpolator(android.view.animation.DecelerateInterpolator()).start()
+    }
+
+    private fun folderAppMenu(
+        folderName: String,
+        pkg: String,
+        label: String,
+        folderDialog: android.app.Dialog,
+        folderContent: android.view.View
+    ) {
+        val isHidden = pkg in hidden()
+        val isInDock = pkg in dock()
+        val options = arrayOf(
+            "Open",
+            "Remove from folder",
+            "App info",
+            if (isInDock) "Remove from Dock" else "Add to Dock",
+            if (isHidden) "Unhide app" else "Hide app",
+            "Share app",
+            "Uninstall"
+        )
+        AlertDialog.Builder(this).setTitle(label).setItems(options) { _, index ->
+            closeFolderDialog(folderDialog, folderContent) {
+                when (options[index]) {
+                    "Open" -> launch(pkg)
+                    "Remove from folder" -> {
+                        val folders = folderMap()
+                        val members = folders[folderName]?.toMutableSet() ?: mutableSetOf()
+                        members.remove(pkg)
+                        if (members.isEmpty()) folders.remove(folderName) else folders[folderName] = members
+                        saveFolders(folders)
+                        Toast.makeText(this, "Removed $label from $folderName", Toast.LENGTH_SHORT).show()
+                        render()
+                    }
+                    "App info" -> startActivity(
+                        Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$pkg"))
+                    )
+                    "Add to Dock" -> {
+                        val items = dock()
+                        if (items.size >= 5 && pkg !in items) {
+                            Toast.makeText(this, "Dock is full (5 apps)", Toast.LENGTH_SHORT).show()
+                        } else {
+                            if (pkg !in items) items.add(pkg)
+                            prefs.edit().putString("dock", items.take(5).joinToString(",")).apply()
+                            refreshDock()
+                        }
+                    }
+                    "Remove from Dock" -> {
+                        val items = dock()
+                        items.remove(pkg)
+                        prefs.edit().putString("dock", items.joinToString(",")).apply()
+                        refreshDock()
+                    }
+                    "Hide app", "Unhide app" -> {
+                        val items = hidden()
+                        if (isHidden) items.remove(pkg) else items.add(pkg)
+                        prefs.edit().putStringSet("hidden_apps", items).apply()
+                        render()
+                    }
+                    "Share app" -> {
+                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_TEXT, "$label\nhttps://play.google.com/store/apps/details?id=$pkg")
+                        }
+                        startActivity(Intent.createChooser(shareIntent, "Share $label"))
+                    }
+                    "Uninstall" -> startActivity(Intent(Intent.ACTION_DELETE, Uri.parse("package:$pkg")))
+                }
+            }
+        }.setNegativeButton("Cancel", null).show()
     }
 
     private fun closeFolderDialog(dialog: android.app.Dialog, content: android.view.View, afterClose: (() -> Unit)? = null) {
