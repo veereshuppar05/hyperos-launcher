@@ -38,6 +38,7 @@ class MainActivity : Activity() {
     private val showLabels: Boolean get() = prefs.getBoolean("show_labels", true)
     private val showHomeLabels: Boolean get() = prefs.getBoolean("home_show_labels", showLabels)
     private val showDrawerLabels: Boolean get() = prefs.getBoolean("drawer_show_labels", showLabels)
+    private val showFolderLabels: Boolean get() = prefs.getBoolean("folder_show_labels", true)
     private val iconSizeDp: Int get() = prefs.getInt("icon_size_dp", 58)
     private val drawerIconSizeDp: Int get() = prefs.getInt("drawer_icon_size_dp", 64)
     private val dockIconSizeDp: Int get() = prefs.getInt("dock_icon_size_dp", 34)
@@ -343,13 +344,19 @@ class MainActivity : Activity() {
             })
         }
         tile.addView(preview, LinearLayout.LayoutParams(dp(58), dp(58)))
-        val folderLabel = TextView(this)
-        folderLabel.text = name
-        folderLabel.textSize = 10.5f
-        folderLabel.gravity = Gravity.CENTER
-        folderLabel.setTextColor(Color.WHITE)
-        tile.addView(folderLabel, LinearLayout.LayoutParams(-1, dp(34)))
-        grid.addView(tile, GridLayout.LayoutParams().apply { this.width = width; height = dp(102) })
+        if (showFolderLabels) {
+            val folderLabel = TextView(this)
+            folderLabel.text = name
+            folderLabel.textSize = 10.5f
+            folderLabel.gravity = Gravity.CENTER
+            folderLabel.setTextColor(Color.WHITE)
+            folderLabel.maxLines = 1
+            tile.addView(folderLabel, LinearLayout.LayoutParams(-1, dp(34)))
+        }
+        grid.addView(tile, GridLayout.LayoutParams().apply {
+            this.width = width
+            height = dp(if (showFolderLabels) 102 else 78)
+        })
     }
 
     private fun appMenu(pkg: String, label: String) {
@@ -584,7 +591,7 @@ class MainActivity : Activity() {
         val homeLabelOption = if (showHomeLabels) "Hide home labels" else "Show home labels"
         val drawerLabelOption = if (showDrawerLabels) "Hide app drawer labels" else "Show app drawer labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape", "Folder preview layout")) { _, index ->
+            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape", "Folder preview layout", if (showFolderLabels) "Hide folder labels" else "Show folder labels")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> drawerGridPicker()
@@ -612,6 +619,7 @@ class MainActivity : Activity() {
                     20 -> folderPreviewBackgroundPicker()
                     21 -> folderPreviewShapePicker()
                     22 -> folderPreviewGridPicker()
+                    23 -> { prefs.edit().putBoolean("folder_show_labels", !showFolderLabels).apply(); render() }
                 }
             }.show()
     }
