@@ -25,6 +25,7 @@ import android.widget.SeekBar
 import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
+import java.text.Normalizer
 
 class MainActivity : Activity() {
     private lateinit var grid: GridLayout
@@ -55,6 +56,7 @@ class MainActivity : Activity() {
     private val homeLabelSize: Float get() = prefs.getFloat("home_label_size_sp", labelSize - 0.5f)
     private val drawerLabelSize: Float get() = prefs.getFloat("drawer_label_size_sp", labelSize + 0.5f)
 
+    private fun normalizeSearchText(value: String): String = Normalizer.normalize(value.lowercase(), Normalizer.Form.NFD).replace(Regex("\\p{Mn}+"), "")
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
     private fun bg(c: Int, r: Int) = GradientDrawable().apply { setColor(c); cornerRadius = dp(r).toFloat() }
     private fun pinned(): MutableSet<String> = prefs.getStringSet("pinned", emptySet())?.toMutableSet() ?: mutableSetOf()
@@ -282,7 +284,7 @@ class MainActivity : Activity() {
             .sortedBy { it.loadLabel(packageManager).toString().lowercase() }
         cachedApps = loaded
         cachedAppSearchLabels = loaded.associate { info ->
-            info.activityInfo.packageName to info.loadLabel(packageManager).toString().lowercase()
+            info.activityInfo.packageName to normalizeSearchText(info.loadLabel(packageManager).toString())
         }
         cachedAppSearchPackages = loaded.associate { info ->
             info.activityInfo.packageName to info.activityInfo.packageName.lowercase()
@@ -313,7 +315,7 @@ class MainActivity : Activity() {
         val folders = folderMap()
         val folderMembers = folders.values.flatten().toSet()
         val home = pinned().filter { it !in folderMembers }
-        val normalizedQuery = query.lowercase()
+        val normalizedQuery = normalizeSearchText(query)
         val searchLabels = cachedAppSearchLabels.orEmpty()
         val searchPackages = cachedAppSearchPackages.orEmpty()
         val chosen = if (showingApps || query.isNotEmpty()) {
