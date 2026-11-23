@@ -337,6 +337,8 @@ class MainActivity : Activity() {
                     val sortedGroup = if (prefs.getBoolean("drawer_reverse_sort", false)) group.reversed() else group
                     sortedGroup.forEach { appTile(it, width) }
                 }
+        } else if (showingApps && query.isNotEmpty()) {
+            chosen.forEach { appTile(it, width) }
         } else {
             chosen.forEach { appTile(it, width) }
         }
