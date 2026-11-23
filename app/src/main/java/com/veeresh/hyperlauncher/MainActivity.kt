@@ -304,7 +304,7 @@ class MainActivity : Activity() {
         }, LinearLayout.LayoutParams(-1, dp(36)))
         grid.addView(tile, GridLayout.LayoutParams().apply {
             this.width = width
-            height = dp(displayIconSize + if (showLabels) 48 else 20 + if (!drawerMode) homeSpacing * 2 else 0)
+            height = dp(displayIconSize + (if (showLabels) 48 else 20) + if (!drawerMode) homeSpacing * 2 else 0)
         })
     }
 
