@@ -191,12 +191,15 @@ class MainActivity : Activity() {
     private fun appTile(info: ResolveInfo, width: Int) {
         val pkg = info.activityInfo.packageName
         val label = info.loadLabel(packageManager).toString()
+        val drawerMode = showingApps || search.text.isNotEmpty()
         val tile = LinearLayout(this).apply {
-            orientation = 1; gravity = Gravity.CENTER; setPadding(dp(2), dp(8), dp(2), dp(8))
-            setOnClickListener { animateTap(this) { launch(pkg) } }; setOnLongClickListener { appMenu(pkg, label); true }
+            orientation = 1; gravity = Gravity.CENTER
+            setPadding(dp(3), dp(if (drawerMode) 4 else 8), dp(3), dp(if (drawerMode) 4 else 8))
+            setOnClickListener { animateTap(this) { launch(pkg) } }
+            setOnLongClickListener { appMenu(pkg, label); true }
         }
         val drawer = showingApps
-        val displayIconSize = iconSizeDp + if (drawer) 4 else 0
+        val displayIconSize = if (drawer) (iconSizeDp + 6).coerceAtMost(72) else iconSizeDp
         val icon = TextView(this).apply {
             gravity = Gravity.CENTER
             background = if (drawer) null else bg(0xff2f3544.toInt(), 18)
@@ -206,7 +209,7 @@ class MainActivity : Activity() {
         }
         tile.addView(icon, LinearLayout.LayoutParams(dp(displayIconSize), dp(displayIconSize)))
         if (showLabels) tile.addView(TextView(this).apply {
-            text = label; textSize = if (drawer) 11f else 10.5f
+            text = label; textSize = if (drawer) 11.5f else 10.5f
             gravity = Gravity.CENTER; setTextColor(Color.WHITE); maxLines = 2
         }, LinearLayout.LayoutParams(-1, dp(36)))
         grid.addView(tile, GridLayout.LayoutParams().apply {
