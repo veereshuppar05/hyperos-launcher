@@ -60,7 +60,7 @@ class MainActivity : Activity() {
     private fun hidden(): MutableSet<String> = prefs.getStringSet("hidden_apps", emptySet())?.toMutableSet() ?: mutableSetOf()
     private fun folderMap(): MutableMap<String, MutableSet<String>> {
         val result = mutableMapOf<String, MutableSet<String>>()
-        (prefs.getString("folders", "") ?: "").split("\n").forEach { line ->
+        (prefs.getString("folders", "") ?: "").lineSequence().forEach { line ->
             val separator = line.indexOf('|')
             if (separator >= 0) {
                 val name = line.substring(0, separator)
