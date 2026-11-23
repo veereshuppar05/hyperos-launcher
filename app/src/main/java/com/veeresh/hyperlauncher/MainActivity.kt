@@ -40,6 +40,7 @@ class MainActivity : Activity() {
     private val showDrawerLabels: Boolean get() = prefs.getBoolean("drawer_show_labels", showLabels)
     private val showFolderLabels: Boolean get() = prefs.getBoolean("folder_show_labels", true)
     private val showFolderAppLabels: Boolean get() = prefs.getBoolean("folder_app_show_labels", showHomeLabels)
+    private val folderAppLabelSize: Float get() = prefs.getFloat("folder_app_label_size_sp", homeLabelSize)
     private val folderLabelSize: Float get() = prefs.getFloat("folder_label_size_sp", 10.5f)
     private val iconSizeDp: Int get() = prefs.getInt("icon_size_dp", 58)
     private val drawerIconSizeDp: Int get() = prefs.getInt("drawer_icon_size_dp", 64)
@@ -488,7 +489,7 @@ class MainActivity : Activity() {
                 tile.addView(iconView, LinearLayout.LayoutParams(dp(cellWidthDp), dp(iconSize + 12)))
                 if (showFolderAppLabels) tile.addView(TextView(this).apply {
                     text = label
-                    textSize = if (folderColumns == 5) minOf(homeLabelSize, 9f) else homeLabelSize
+                    textSize = if (folderColumns == 5) minOf(folderAppLabelSize, 9f) else folderAppLabelSize
                     gravity = Gravity.CENTER
                     setTextColor(Color.WHITE)
                     maxLines = 2
@@ -677,7 +678,7 @@ class MainActivity : Activity() {
         val homeLabelOption = if (showHomeLabels) "Hide home labels" else "Show home labels"
         val drawerLabelOption = if (showDrawerLabels) "Hide app drawer labels" else "Show app drawer labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape", "Folder preview layout", if (showFolderLabels) "Hide folder labels" else "Show folder labels", "Folder label size", "Folder app grid", "Opened folder background", "Opened folder shape", if (showFolderAppLabels) "Hide folder app labels" else "Show folder app labels", "Folder app sorting", "Opened folder icon size")) { _, index ->
+            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape", "Folder preview layout", if (showFolderLabels) "Hide folder labels" else "Show folder labels", "Folder label size", "Folder app grid", "Opened folder background", "Opened folder shape", if (showFolderAppLabels) "Hide folder app labels" else "Show folder app labels", "Folder app sorting", "Opened folder icon size", "Opened folder app label size")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> drawerGridPicker()
@@ -713,6 +714,7 @@ class MainActivity : Activity() {
                     28 -> { prefs.edit().putBoolean("folder_app_show_labels", !showFolderAppLabels).apply(); render() }
                     29 -> folderSortPicker()
                     30 -> folderOpenIconSizePicker()
+                    31 -> folderOpenAppLabelSizePicker()
                 }
             }.show()
     }
@@ -811,6 +813,18 @@ class MainActivity : Activity() {
                 prefs.edit().putBoolean("folder_reverse_sort", which == 1).apply()
                 dialog.dismiss()
                 render()
+            }.setNegativeButton("Cancel", null).show()
+    }
+
+    private fun folderOpenAppLabelSizePicker() {
+        val options = arrayOf("Small (9 sp)", "Medium (10 sp)", "Large (11 sp)", "Extra large (12 sp)")
+        val values = floatArrayOf(9f, 10f, 11f, 12f)
+        val current = values.indexOfFirst { it == folderAppLabelSize }.coerceAtLeast(0)
+        AlertDialog.Builder(this).setTitle("Opened folder app label size")
+            .setSingleChoiceItems(options, current) { dialog, which ->
+                prefs.edit().putFloat("folder_app_label_size_sp", values[which]).apply()
+                dialog.dismiss()
+                Toast.makeText(this, "Folder app label size updated", Toast.LENGTH_SHORT).show()
             }.setNegativeButton("Cancel", null).show()
     }
 
