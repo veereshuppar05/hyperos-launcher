@@ -57,7 +57,20 @@ class MainActivity : Activity() {
     private val drawerLabelSize: Float get() = prefs.getFloat("drawer_label_size_sp", labelSize + 0.5f)
 
     private fun normalizeSearchText(value: String): String = Normalizer.normalize(value.lowercase(), Normalizer.Form.NFD).replace(Regex("\\p{Mn}+"), "")
-    private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
+    private fun appSearchRank(label: String, packageName: String, query: String, tokens: List<String>): Int {
+        val labelWords = label.split(Regex("\\s+"))
+        return when {
+            label == query -> 0
+            label.startsWith(query) -> 1
+            labelWords.any { it.startsWith(query) } -> 2
+            tokens.all { label.contains(it) } -> 3
+            label.contains(query) -> 4
+            tokens.all { packageName.contains(it) } -> 5
+            packageName.contains(query) -> 6
+            else -> 7
+        }
+    }
+    private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt
     private fun bg(c: Int, r: Int) = GradientDrawable().apply { setColor(c); cornerRadius = dp(r).toFloat() }
     private fun pinned(): MutableSet<String> = prefs.getStringSet("pinned", emptySet())?.toMutableSet() ?: mutableSetOf()
     private fun hidden(): MutableSet<String> = prefs.getStringSet("hidden_apps", emptySet())?.toMutableSet() ?: mutableSetOf()
@@ -316,42 +329,30 @@ class MainActivity : Activity() {
         val folderMembers = folders.values.flatten().toSet()
         val home = pinned().filter { it !in folderMembers }
         val normalizedQuery = normalizeSearchText(query)
+        val queryTokens = normalizedQuery.split(Regex("\\s+")).filter { it.isNotBlank() }
         val searchLabels = cachedAppSearchLabels.orEmpty()
         val searchPackages = cachedAppSearchPackages.orEmpty()
         val chosen = if (showingApps || query.isNotEmpty()) {
-                         val matches = all.filter { info ->
-                             (searchLabels[info.activityInfo.packageName] ?: info.loadLabel(packageManager).toString().lowercase()).contains(normalizedQuery) ||
-                             (searchPackages[info.activityInfo.packageName] ?: info.activityInfo.packageName.lowercase()).contains(normalizedQuery)
-                         }
-                         if (query.isNotEmpty()) {
-                             val ranked = matches.sortedBy { info ->
-                                 val label = searchLabels[info.activityInfo.packageName] ?: info.loadLabel(packageManager).toString().lowercase()
-                                 val packageName = searchPackages[info.activityInfo.packageName] ?: info.activityInfo.packageName.lowercase()
-                                 when {
-                                     label == normalizedQuery -> 0
-                                     label.startsWith(normalizedQuery) -> 1
-                                     label.split(Regex("\\s+")).any { it.startsWith(normalizedQuery) } -> 2
-                                     label.contains(normalizedQuery) -> 3
-                                     packageName.contains(normalizedQuery) -> 4
-                                     else -> 5
-                                 }
-                             }
-                             if (prefs.getBoolean("drawer_reverse_sort", false)) {
-                                 ranked.groupBy { info ->
-                                     val label = searchLabels[info.activityInfo.packageName] ?: info.loadLabel(packageManager).toString().lowercase()
-                                     val packageName = searchPackages[info.activityInfo.packageName] ?: info.activityInfo.packageName.lowercase()
-                                     when {
-                                         label == normalizedQuery -> 0
-                                         label.startsWith(normalizedQuery) -> 1
-                                         label.split(Regex("\\s+")).any { it.startsWith(normalizedQuery) } -> 2
-                                         label.contains(normalizedQuery) -> 3
-                                         packageName.contains(normalizedQuery) -> 4
-                                         else -> 5
-                                     }
-                                 }.toSortedMap().values.flatMap { it.reversed() }
-                             } else ranked
-                         } else matches
-                     } else all.filter { it.activityInfo.packageName in home }
+            val matches = all.filter { info ->
+                val label = searchLabels[info.activityInfo.packageName] ?: normalizeSearchText(info.loadLabel(packageManager).toString())
+                val packageName = searchPackages[info.activityInfo.packageName] ?: info.activityInfo.packageName.lowercase()
+                queryTokens.isEmpty() || queryTokens.all { label.contains(it) || packageName.contains(it) }
+            }
+            if (query.isNotEmpty()) {
+                val ranked = matches.sortedBy { info ->
+                    val label = searchLabels[info.activityInfo.packageName] ?: normalizeSearchText(info.loadLabel(packageManager).toString())
+                    val packageName = searchPackages[info.activityInfo.packageName] ?: info.activityInfo.packageName.lowercase()
+                    appSearchRank(label, packageName, normalizedQuery, queryTokens)
+                }
+                if (prefs.getBoolean("drawer_reverse_sort", false)) {
+                    ranked.groupBy { info ->
+                        val label = searchLabels[info.activityInfo.packageName] ?: normalizeSearchText(info.loadLabel(packageManager).toString())
+                        val packageName = searchPackages[info.activityInfo.packageName] ?: info.activityInfo.packageName.lowercase()
+                        appSearchRank(label, packageName, normalizedQuery, queryTokens)
+                    }.toSortedMap().values.flatMap { it.reversed() }
+                } else ranked
+            } else matches
+        } else all.filter { it.activityInfo.packageName in home }
         if (!showingApps && query.isEmpty()) folders.forEach { (name, packages) -> folderTile(name, packages, all) }
         val activeColumns = if (showingApps) drawerColumns else columns
         val width = (resources.displayMetrics.widthPixels - dp(32)) / activeColumns
