@@ -1377,8 +1377,8 @@ class MainActivity : Activity() {
                 textSize = prefs.getFloat("dock_label_size_sp", 10f)
                 setTextColor(appLabelColor("dock_label_color"))
                 background = when (prefs.getInt("dock_label_background", 0).coerceIn(0, 2)) {
-                    1 -> bg(0x334d5668.toInt(), 6)
-                    2 -> bg(0xff222833.toInt(), 8)
+                    1 -> bg(Color.argb(51, 77, 86, 104), 6)
+                    2 -> bg(Color.rgb(34, 40, 51), 8)
                     else -> null
                 }
                 setPadding(dp(2), dp(1), dp(2), dp(1))
