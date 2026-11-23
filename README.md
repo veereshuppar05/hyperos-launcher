@@ -1,11 +1,11 @@
-# HyperLauncher 1.0.0
+# HyperLauncher 1.0.1
 
 A lightweight, customizable Android launcher built with native Android views and Kotlin.
 
 ## Features
 
-- Home screen with live clock/date card, pinned apps and a customizable dock
-- App drawer with alphabetical sections and quick letter navigation
+- Home screen with a minimal clock/date widget, first-run app placement and a customizable four-icon dock
+- HyperOS-inspired app drawer with category chips, alphabetical sections and quick letter navigation
 - App search with accent-insensitive matching and relevance ranking
 - App folders, folder management and folder layout controls
 - Hidden apps management
