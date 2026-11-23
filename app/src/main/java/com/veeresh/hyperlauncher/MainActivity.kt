@@ -768,7 +768,7 @@ class MainActivity : Activity() {
         val homeLabelOption = if (showHomeLabels) "Hide home labels" else "Show home labels"
         val drawerLabelOption = if (showDrawerLabels) "Hide app drawer labels" else "Show app drawer labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape", "Folder preview layout", if (showFolderLabels) "Hide folder labels" else "Show folder labels", "Folder label size", "Folder app grid", "Opened folder background", "Opened folder shape", if (showFolderAppLabels) "Hide folder app labels" else "Show folder app labels", "Folder app sorting", "Opened folder icon size", "Opened folder app label size", "Wallpaper dimming", "Home icon background opacity", "Home label colour", "App drawer label colour", "Dock background shape", "Dock background opacity", "Dock label size", "Dock label colour", "Dock side padding", "Dock icon spacing", if (prefs.getBoolean("dock_label_bold", false)) "Dock label: Bold" else "Dock label: Regular", "Dock label background", "Dock icon opacity", "Dock vertical position", "Dock height")) { _, index ->
+            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape", "Folder preview layout", if (showFolderLabels) "Hide folder labels" else "Show folder labels", "Folder label size", "Folder app grid", "Opened folder background", "Opened folder shape", if (showFolderAppLabels) "Hide folder app labels" else "Show folder app labels", "Folder app sorting", "Opened folder icon size", "Opened folder app label size", "Wallpaper dimming", "Home icon background opacity", "Home label colour", "App drawer label colour", "Dock background shape", "Dock background opacity", "Dock label size", "Dock label colour", "Dock side padding", "Dock icon spacing", if (prefs.getBoolean("dock_label_bold", false)) "Dock label: Bold" else "Dock label: Regular", "Dock label background", "Dock icon opacity", "Dock vertical position", "Dock height", "Dock alignment")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> drawerGridPicker()
@@ -820,6 +820,7 @@ class MainActivity : Activity() {
                     44 -> dockIconOpacityPicker()
                     45 -> dockVerticalOffsetPicker()
                     46 -> dockHeightPicker()
+                    47 -> dockAlignmentPicker()
                 }
             }.show()
     }
@@ -1199,6 +1200,17 @@ class MainActivity : Activity() {
             }.setNegativeButton("Cancel", null).show()
     }
 
+    private fun dockAlignmentPicker() {
+        val options = arrayOf("Left", "Center", "Right")
+        val current = prefs.getInt("dock_alignment", 1).coerceIn(0, 2)
+        AlertDialog.Builder(this).setTitle("Dock alignment")
+            .setSingleChoiceItems(options, current) { dialog, which ->
+                prefs.edit().putInt("dock_alignment", which).apply()
+                dialog.dismiss()
+                refreshDock()
+            }.setNegativeButton("Cancel", null).show()
+    }
+
     private fun dockHeightPicker() {
         val options = arrayOf("Compact", "Standard", "Tall")
         val current = prefs.getInt("dock_height_style", 1).coerceIn(0, 2)
@@ -1373,7 +1385,7 @@ class MainActivity : Activity() {
         val parent = ancestor as? LinearLayout ?: return
         parent.removeViewAt(parent.childCount - 1)
         val bar = LinearLayout(this).apply {
-            orientation = 0; gravity = Gravity.CENTER; background = dockBackground()
+            orientation = 0; gravity = intArrayOf(Gravity.LEFT or Gravity.CENTER_VERTICAL, Gravity.CENTER, Gravity.RIGHT or Gravity.CENTER_VERTICAL)[prefs.getInt("dock_alignment", 1).coerceIn(0, 2)]; background = dockBackground()
             val sidePadding = intArrayOf(2, 6, 12)[prefs.getInt("dock_side_padding", 1).coerceIn(0, 2)]
             setPadding(dp(sidePadding), dp(6), dp(sidePadding), dp(6))
         }
