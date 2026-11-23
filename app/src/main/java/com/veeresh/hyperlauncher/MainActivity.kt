@@ -435,6 +435,7 @@ class MainActivity : Activity() {
     private fun appSectionHeader(letter: Char) {
         val header = TextView(this).apply {
             text = letter.toString()
+            contentDescription = "Apps starting with $letter"
             textSize = 13f
             setTextColor(0xffaebbd6.toInt())
             gravity = Gravity.CENTER_VERTICAL
