@@ -24,6 +24,7 @@ import android.widget.ScrollView
 import android.widget.SeekBar
 import android.widget.FrameLayout
 import android.widget.TextView
+import android.widget.TextClock
 import android.widget.Toast
 import java.text.Normalizer
 
@@ -33,6 +34,10 @@ class MainActivity : Activity() {
     private lateinit var alphabetRail: TextView
     private val sectionHeaders = mutableMapOf<Char, android.view.View>()
     private lateinit var search: EditText
+    private lateinit var homeHeader: LinearLayout
+    private lateinit var drawerHeader: LinearLayout
+    private lateinit var searchContainer: FrameLayout
+    private lateinit var homeGestureHint: TextView
     private var showingApps = false
     private var pageTransitioning = false
     private var lastLaunchPackage: String? = null
@@ -103,27 +108,101 @@ class MainActivity : Activity() {
     private fun buildUi() {
         val root = LinearLayout(this).apply {
             orientation = 1
-            setPadding(dp(16), dp(20), dp(16), dp(10))
+            setPadding(dp(16), dp(10), dp(16), dp(8))
             background = wallpaperDrawable() ?: bg(Color.rgb(18, 20, 27), 0)
         }
-        val header = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
-        header.addView(TextView(this).apply {
-            text = "HyperLauncher"
-            textSize = 26f
+
+        // A compact, live clock card gives the home page a more HyperOS-like
+        // visual anchor instead of the old app-title-and-tabs layout.
+        homeHeader = LinearLayout(this).apply {
+            orientation = 0
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(20), dp(14), dp(14), dp(14))
+            background = GradientDrawable(
+                GradientDrawable.Orientation.TL_BR,
+                intArrayOf(0xcc394b68.toInt(), 0xb52b354a.toInt(), 0x99353b50.toInt())
+            ).apply {
+                cornerRadius = dp(30).toFloat()
+                setStroke(dp(1), 0x44ffffff)
+            }
+            elevation = dp(2).toFloat()
+        }
+        val clockColumn = LinearLayout(this).apply {
+            orientation = 1
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        clockColumn.addView(TextView(this).apply {
+            text = "YOUR SPACE"
+            textSize = 10f
+            letterSpacing = 0.18f
+            setTextColor(0xffd9e2f3.toInt())
+            setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL))
+        }, LinearLayout.LayoutParams(-1, dp(20)))
+        clockColumn.addView(TextClock(this).apply {
+            format12Hour = "h:mm"
+            format24Hour = "HH:mm"
+            textSize = 54f
+            includeFontPadding = false
             setTextColor(Color.WHITE)
-        }, LinearLayout.LayoutParams(0, dp(48), 1f))
-        header.addView(TextView(this).apply {
-            text = "⋮"; textSize = 24f; setTextColor(Color.WHITE); gravity = Gravity.CENTER
+            setTypeface(android.graphics.Typeface.create("sans-serif-light", android.graphics.Typeface.NORMAL))
+            setShadowLayer(dp(2).toFloat(), 0f, dp(1).toFloat(), 0x55000000)
+            contentDescription = "Current time"
+        }, LinearLayout.LayoutParams(-1, dp(64)))
+        clockColumn.addView(TextClock(this).apply {
+            format12Hour = "EEEE, d MMMM"
+            format24Hour = "EEEE, d MMMM"
+            textSize = 13f
+            setTextColor(0xffe0e6f1.toInt())
+            contentDescription = "Today's date"
+        }, LinearLayout.LayoutParams(-1, dp(26)))
+        homeHeader.addView(clockColumn, LinearLayout.LayoutParams(0, -1, 1f))
+        homeHeader.addView(TextView(this).apply {
+            text = "⚙"
+            textSize = 22f
+            gravity = Gravity.CENTER
+            setTextColor(Color.WHITE)
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(0x334f607b)
+                setStroke(dp(1), 0x55ffffff)
+            }
+            contentDescription = "Launcher settings"
             setOnClickListener { settings() }
-        }, LinearLayout.LayoutParams(dp(48), dp(48)))
-        root.addView(header, LinearLayout.LayoutParams(-1, dp(48)))
+        }, LinearLayout.LayoutParams(dp(46), dp(46)))
+        root.addView(homeHeader, LinearLayout.LayoutParams(-1, dp(154)).apply {
+            bottomMargin = dp(18)
+        })
+
+        drawerHeader = LinearLayout(this).apply {
+            orientation = 1
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(4), 0, dp(4), 0)
+        }
+        drawerHeader.addView(TextView(this).apply {
+            text = "All apps"
+            textSize = 27f
+            setTextColor(Color.WHITE)
+            setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL))
+        }, LinearLayout.LayoutParams(-1, dp(36)))
+        drawerHeader.addView(TextView(this).apply {
+            text = "Find your apps"
+            textSize = 12f
+            setTextColor(0xffaebbd0.toInt())
+        }, LinearLayout.LayoutParams(-1, dp(22)))
+        root.addView(drawerHeader, LinearLayout.LayoutParams(-1, dp(62)).apply {
+            bottomMargin = dp(8)
+        })
 
         search = EditText(this).apply {
-            hint = if (showingApps) "Search all apps" else "Search apps"
-            contentDescription = if (showingApps) "Search all installed apps" else "Search apps on home screen"
-            setHintTextColor(0xff9ba3b2.toInt()); setTextColor(Color.WHITE)
-            setSingleLine(true); imeOptions = EditorInfo.IME_ACTION_SEARCH
-            setPadding(dp(16), 0, dp(16), 0); background = bg(0xff272b36.toInt(), 24)
+            hint = "Search all apps"
+            contentDescription = "Search all installed apps"
+            setHintTextColor(0xffb7c1d1.toInt())
+            setTextColor(Color.WHITE)
+            textSize = 15f
+            singleLine = true
+            imeOptions = EditorInfo.IME_ACTION_SEARCH
+            setPadding(dp(44), 0, dp(48), 0)
+            background = null
             setOnEditorActionListener { _, actionId, _ ->
                 if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                     val imm = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
@@ -140,15 +219,27 @@ class MainActivity : Activity() {
                 }
             }
         }
-        val searchContainer = FrameLayout(this).apply {
-            background = bg(0xff272b36.toInt(), 24)
+        searchContainer = FrameLayout(this).apply {
+            background = GradientDrawable().apply {
+                setColor(0x33252d3b)
+                cornerRadius = dp(22).toFloat()
+                setStroke(dp(1), 0x44ffffff)
+            }
+            addView(search, FrameLayout.LayoutParams(-1, -1))
+            addView(TextView(this@MainActivity).apply {
+                text = "⌕"
+                textSize = 26f
+                gravity = Gravity.CENTER
+                setTextColor(0xffc5d0e2.toInt())
+                contentDescription = "Search"
+            }, FrameLayout.LayoutParams(dp(42), -1, Gravity.START))
         }
-        search.setPadding(dp(16), 0, dp(48), 0)
-        search.background = null
-        searchContainer.addView(search, FrameLayout.LayoutParams(-1, -1))
         val clearSearch = TextView(this).apply {
-            text = "×"; textSize = 26f; setTextColor(0xffb7bfce.toInt()
-            ); gravity = Gravity.CENTER; visibility = if (search.text.isNullOrEmpty()) android.view.View.GONE else android.view.View.VISIBLE
+            text = "×"
+            textSize = 26f
+            setTextColor(0xffd5deec.toInt())
+            gravity = Gravity.CENTER
+            visibility = android.view.View.GONE
             contentDescription = "Clear search"
             setOnClickListener {
                 search.text.clear()
@@ -156,9 +247,7 @@ class MainActivity : Activity() {
                 search.requestFocus()
             }
         }
-        searchContainer.addView(clearSearch, FrameLayout.LayoutParams(dp(48), -1).apply {
-            gravity = Gravity.RIGHT or Gravity.CENTER_VERTICAL
-        })
+        searchContainer.addView(clearSearch, FrameLayout.LayoutParams(dp(44), -1, Gravity.END))
         search.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
@@ -166,14 +255,14 @@ class MainActivity : Activity() {
             }
             override fun afterTextChanged(s: Editable?) {}
         })
-        root.addView(searchContainer, LinearLayout.LayoutParams(-1, dp(48)).apply { topMargin = dp(12) })
+        root.addView(searchContainer, LinearLayout.LayoutParams(-1, dp(48)).apply {
+            bottomMargin = dp(12)
+        })
 
-        val tabs = LinearLayout(this).apply { orientation = 0; setPadding(0, dp(10), 0, dp(8)) }
-        tabs.addView(tab("Home") { switchPage(false) }, LinearLayout.LayoutParams(0, dp(40), 1f))
-        tabs.addView(tab("Apps") { switchPage(true) }, LinearLayout.LayoutParams(0, dp(40), 1f))
-        root.addView(tabs)
-
-        val scroll = ScrollView(this)
+        val scroll = ScrollView(this).apply {
+            isVerticalScrollBarEnabled = false
+            clipToPadding = false
+        }
         var touchStartX = 0f
         var touchStartY = 0f
         scroll.setOnTouchListener { _, event ->
@@ -221,7 +310,7 @@ class MainActivity : Activity() {
             text = "A\nB\nC\nD\nE\nF\nG\nH\nI\nJ\nK\nL\nM\nN\nO\nP\nQ\nR\nS\nT\nU\nV\nW\nX\nY\nZ\n#"
             contentDescription = "Alphabetical app navigation. Touch or drag to jump to a letter."
             textSize = 9f
-            setTextColor(0xffb9c5df.toInt())
+            setTextColor(0xffd3def1.toInt())
             gravity = Gravity.CENTER
             setPadding(dp(3), dp(2), dp(3), dp(2))
             visibility = android.view.View.GONE
@@ -248,10 +337,23 @@ class MainActivity : Activity() {
                 } else event.action == MotionEvent.ACTION_UP
             }
         }
-        contentFrame.addView(alphabetRail, FrameLayout.LayoutParams(dp(26), -1, Gravity.END))
+        contentFrame.addView(alphabetRail, FrameLayout.LayoutParams(dp(24), -1, Gravity.END))
         root.addView(contentFrame, LinearLayout.LayoutParams(-1, 0, 1f))
+
+        homeGestureHint = TextView(this).apply {
+            text = "⌃   SWIPE UP FOR ALL APPS   ⌃"
+            textSize = 10f
+            letterSpacing = 0.12f
+            gravity = Gravity.CENTER
+            setTextColor(0xffc6d0e0.toInt())
+            contentDescription = "Swipe up to open all apps"
+        }
+        root.addView(homeGestureHint, LinearLayout.LayoutParams(-1, dp(27)))
+
         val dockBar = LinearLayout(this).apply {
-            gravity = Gravity.CENTER; orientation = 0; background = dockBackground()
+            gravity = Gravity.CENTER
+            orientation = 0
+            background = dockBackground()
             setPadding(dp(6), dp(6), dp(6), dp(6))
         }
         root.addView(dockBar, LinearLayout.LayoutParams(-1, dp(dockBarHeightDp)))
@@ -261,11 +363,23 @@ class MainActivity : Activity() {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 if (!s.isNullOrEmpty()) showingApps = true
+                updatePageChrome()
                 if (!pageTransitioning) render()
             }
             override fun afterTextChanged(s: Editable?) {}
         })
+        updatePageChrome()
         updateDock(dockBar)
+    }
+
+    private fun updatePageChrome() {
+        if (!::homeHeader.isInitialized) return
+        homeHeader.visibility = if (showingApps) android.view.View.GONE else android.view.View.VISIBLE
+        drawerHeader.visibility = if (showingApps) android.view.View.VISIBLE else android.view.View.GONE
+        searchContainer.visibility = if (showingApps) android.view.View.VISIBLE else android.view.View.GONE
+        homeGestureHint.visibility = if (showingApps) android.view.View.GONE else android.view.View.VISIBLE
+        search.hint = "Search all apps"
+        search.contentDescription = "Search all installed apps"
     }
 
     private fun switchPage(toApps: Boolean) {
@@ -284,6 +398,7 @@ class MainActivity : Activity() {
             .setInterpolator(android.view.animation.AccelerateInterpolator()).withEndAction {
                 showingApps = toApps
                 pageTransitioning = false
+                updatePageChrome()
                 if (search.text.isNotEmpty()) search.setText("") else render()
                 grid.alpha = 0f
                 grid.translationX = dp(24) * -direction
@@ -1216,7 +1331,7 @@ class MainActivity : Activity() {
 
     private fun homeIconBackground(): android.graphics.drawable.Drawable? {
         val color = homeIconBackgroundColor()
-        return when (prefs.getInt("home_icon_shape", 0)) {
+        return when (prefs.getInt("home_icon_shape", 3)) {
             1 -> GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
                 setColor(color)
@@ -1240,7 +1355,7 @@ class MainActivity : Activity() {
 
     private fun homeIconShapePicker() {
         val options = arrayOf("Rounded square", "Circle", "Squircle", "No background")
-        val current = prefs.getInt("home_icon_shape", 0).coerceIn(0, options.lastIndex)
+        val current = prefs.getInt("home_icon_shape", 3).coerceIn(0, options.lastIndex)
         AlertDialog.Builder(this).setTitle("Home icon shape")
             .setSingleChoiceItems(options, current) { dialog, which ->
                 prefs.edit().putInt("home_icon_shape", which).apply()
