@@ -1630,6 +1630,11 @@ class MainActivity : Activity() {
 
     private fun animateTap(view: android.view.View, action: () -> Unit) {
         view.animate().cancel()
+        // Restore any interrupted tap animation before starting a new one.
+        view.alpha = 1f
+        view.scaleX = 1f
+        view.scaleY = 1f
+        view.translationY = 0f
         when (prefs.getInt("tap_feedback_style", 1).coerceIn(0, 4)) {
             0 -> action()
             1 -> view.animate().scaleX(0.94f).scaleY(0.94f).setDuration(85).withEndAction {
