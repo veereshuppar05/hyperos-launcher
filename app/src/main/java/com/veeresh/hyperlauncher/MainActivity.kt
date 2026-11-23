@@ -768,7 +768,7 @@ class MainActivity : Activity() {
         val homeLabelOption = if (showHomeLabels) "Hide home labels" else "Show home labels"
         val drawerLabelOption = if (showDrawerLabels) "Hide app drawer labels" else "Show app drawer labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape", "Folder preview layout", if (showFolderLabels) "Hide folder labels" else "Show folder labels", "Folder label size", "Folder app grid", "Opened folder background", "Opened folder shape", if (showFolderAppLabels) "Hide folder app labels" else "Show folder app labels", "Folder app sorting", "Opened folder icon size", "Opened folder app label size", "Wallpaper dimming")) { _, index ->
+            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape", "Folder preview layout", if (showFolderLabels) "Hide folder labels" else "Show folder labels", "Folder label size", "Folder app grid", "Opened folder background", "Opened folder shape", if (showFolderAppLabels) "Hide folder app labels" else "Show folder app labels", "Folder app sorting", "Opened folder icon size", "Opened folder app label size", "Wallpaper dimming", "Home icon background opacity")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> drawerGridPicker()
@@ -806,6 +806,7 @@ class MainActivity : Activity() {
                     30 -> folderOpenIconSizePicker()
                     31 -> folderOpenAppLabelSizePicker()
                     32 -> wallpaperDimPicker()
+                    33 -> homeIconBackgroundOpacityPicker()
                 }
             }.show()
     }
@@ -998,7 +999,14 @@ class MainActivity : Activity() {
             0xff854b62.toInt(),
             0xff80643a.toInt()
         )
-        return colors[prefs.getInt("home_icon_bg_color", 0).coerceIn(0, colors.lastIndex)]
+        val selected = colors[prefs.getInt("home_icon_bg_color", 0).coerceIn(0, colors.lastIndex)]
+        val opacity = intArrayOf(100, 75, 50, 25)[prefs.getInt("home_icon_bg_opacity", 0).coerceIn(0, 3)]
+        return Color.argb(
+            (Color.alpha(selected) * opacity) / 100,
+            Color.red(selected),
+            Color.green(selected),
+            Color.blue(selected)
+        )
     }
 
     private fun homeIconBackground(): android.graphics.drawable.Drawable? {
@@ -1012,6 +1020,17 @@ class MainActivity : Activity() {
             3 -> null
             else -> bg(color, 18)
         }
+    }
+
+    private fun homeIconBackgroundOpacityPicker() {
+        val options = arrayOf("100% — Solid", "75% — Slightly transparent", "50% — Semi-transparent", "25% — Subtle")
+        val current = prefs.getInt("home_icon_bg_opacity", 0).coerceIn(0, options.lastIndex)
+        AlertDialog.Builder(this).setTitle("Home icon background opacity")
+            .setSingleChoiceItems(options, current) { dialog, which ->
+                prefs.edit().putInt("home_icon_bg_opacity", which).apply()
+                dialog.dismiss()
+                render()
+            }.setNegativeButton("Cancel", null).show()
     }
 
     private fun homeIconShapePicker() {
