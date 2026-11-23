@@ -61,13 +61,14 @@ class MainActivity : Activity() {
         val labelWords = label.split(Regex("\\s+"))
         return when {
             label == query -> 0
-            label.startsWith(query) -> 1
-            labelWords.any { it.startsWith(query) } -> 2
-            tokens.all { label.contains(it) } -> 3
-            label.contains(query) -> 4
-            tokens.all { packageName.contains(it) } -> 5
-            packageName.contains(query) -> 6
-            else -> 7
+            labelWords.any { it == query } -> 1
+            label.startsWith(query) -> 2
+            labelWords.any { it.startsWith(query) } -> 3
+            tokens.all { label.contains(it) } -> 4
+            label.contains(query) -> 5
+            tokens.all { packageName.contains(it) } -> 6
+            packageName.contains(query) -> 7
+            else -> 8
         }
     }
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
