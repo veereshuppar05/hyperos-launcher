@@ -149,7 +149,11 @@ class MainActivity : Activity() {
             text = "×"; textSize = 26f; setTextColor(0xffb7bfce.toInt()
             ); gravity = Gravity.CENTER; visibility = if (search.text.isNullOrEmpty()) android.view.View.GONE else android.view.View.VISIBLE
             contentDescription = "Clear search"
-            setOnClickListener { search.text.clear(); search.requestFocus() }
+            setOnClickListener {
+                search.text.clear()
+                appScroll.scrollTo(0, 0)
+                search.requestFocus()
+            }
         }
         searchContainer.addView(clearSearch, FrameLayout.LayoutParams(dp(48), -1).apply {
             gravity = Gravity.RIGHT or Gravity.CENTER_VERTICAL
