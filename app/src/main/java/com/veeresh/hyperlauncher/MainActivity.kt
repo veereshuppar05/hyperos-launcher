@@ -140,7 +140,7 @@ class MainActivity : Activity() {
                 val absX = kotlin.math.abs(deltaX)
                 val absY = kotlin.math.abs(deltaY)
                 val inputMethod = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
-                val keyboardVisible = inputMethod.isAcceptingText
+                val keyboardVisible = inputMethod.isAcceptingText()
                 if (!keyboardVisible && !pageTransitioning) {
                     when {
                         absY > dp(105) && absY > absX * 1.25f &&
