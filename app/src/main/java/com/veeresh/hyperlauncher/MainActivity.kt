@@ -267,7 +267,7 @@ class MainActivity : Activity() {
         sectionHeaders.clear()
         if (::alphabetRail.isInitialized) alphabetRail.visibility = if (showingApps && search.text.isEmpty()) android.view.View.VISIBLE else android.view.View.GONE
         val all = apps()
-        val query = search.text.toString()
+        val query = search.text.toString().trim()
         val folderMembers = folderMap().values.flatten().toSet()
         val home = pinned().filter { it !in folderMembers }
         val normalizedQuery = query.trim().lowercase()
