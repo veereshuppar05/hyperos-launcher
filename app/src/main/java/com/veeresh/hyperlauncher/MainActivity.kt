@@ -37,6 +37,7 @@ class MainActivity : Activity() {
     private val prefs by lazy { getSharedPreferences("hyperlauncher", MODE_PRIVATE) }
     private val showLabels: Boolean get() = prefs.getBoolean("show_labels", true)
     private val iconSizeDp: Int get() = prefs.getInt("icon_size_dp", 58)
+    private val drawerIconSizeDp: Int get() = prefs.getInt("drawer_icon_size_dp", 64)
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
     private fun bg(c: Int, r: Int) = GradientDrawable().apply { setColor(c); cornerRadius = dp(r).toFloat() }
@@ -278,7 +279,7 @@ class MainActivity : Activity() {
             setOnLongClickListener { appMenu(pkg, label); true }
         }
         val drawer = showingApps
-        val displayIconSize = if (drawer) (iconSizeDp + 6).coerceAtMost(72) else iconSizeDp
+        val displayIconSize = if (drawer) drawerIconSizeDp else iconSizeDp
         val icon = TextView(this).apply {
             gravity = Gravity.CENTER
             background = if (drawer) null else bg(0xff2f3544.toInt(), 18)
@@ -544,21 +545,22 @@ class MainActivity : Activity() {
     private fun settings() {
         val labelOption = if (showLabels) "Hide app labels" else "Show app labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Icon size", "Change wallpaper", "Reset wallpaper", labelOption, "Clear home pins", "Manage hidden apps")) { _, index ->
+            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Icon size", "App drawer icon size", "Change wallpaper", "Reset wallpaper", labelOption, "Clear home pins", "Manage hidden apps")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> drawerGridPicker()
                     2 -> drawerSortPicker()
                     3 -> dockPicker()
                     4 -> iconSizePicker()
-                    5 -> chooseWallpaper()
-                    6 -> { prefs.edit().remove("wallpaper_uri").apply(); recreate() }
-                    7 -> { prefs.edit().putBoolean("show_labels", !showLabels).apply(); render() }
-                    8 -> AlertDialog.Builder(this).setTitle("Clear home pins?")
+                    5 -> drawerIconSizePicker()
+                    6 -> chooseWallpaper()
+                    7 -> { prefs.edit().remove("wallpaper_uri").apply(); recreate() }
+                    8 -> { prefs.edit().putBoolean("show_labels", !showLabels).apply(); render() }
+                    9 -> AlertDialog.Builder(this).setTitle("Clear home pins?")
                         .setMessage("Remove all pinned apps from the Home tab?")
                         .setPositiveButton("Clear") { _, _ -> prefs.edit().putStringSet("pinned", emptySet()).apply(); render() }
                         .setNegativeButton("Cancel", null).show()
-                    9 -> manageHiddenApps()
+                    10 -> manageHiddenApps()
                 }
             }.show()
     }
@@ -631,6 +633,19 @@ class MainActivity : Activity() {
                 render()
             }.setNegativeButton("Cancel", null).show()
     }
+
+    private fun drawerIconSizePicker() {
+        val sizes = arrayOf("Small (48 dp)", "Medium (64 dp)", "Large (72 dp)", "Extra large (80 dp)")
+        val values = intArrayOf(48, 64, 72, 80)
+        val current = values.indexOf(drawerIconSizeDp).coerceAtLeast(0)
+        AlertDialog.Builder(this).setTitle("App drawer icon size")
+            .setSingleChoiceItems(sizes, current) { dialog, which ->
+                prefs.edit().putInt("drawer_icon_size_dp", values[which]).apply()
+                dialog.dismiss()
+                render()
+            }.setNegativeButton("Cancel", null).show()
+    }
+
 
     private fun dockPicker() {
         val all = apps(); val current = dock().toSet()
