@@ -1630,7 +1630,7 @@ class MainActivity : Activity() {
 
     private fun animateTap(view: android.view.View, action: () -> Unit) {
         view.animate().cancel()
-        when (prefs.getInt("tap_feedback_style", 1).coerceIn(0, 2)) {
+        when (prefs.getInt("tap_feedback_style", 1).coerceIn(0, 4)) {
             0 -> action()
             1 -> view.animate().scaleX(0.94f).scaleY(0.94f).setDuration(85).withEndAction {
                 view.animate().scaleX(1f).scaleY(1f).setDuration(100)
@@ -1642,8 +1642,8 @@ class MainActivity : Activity() {
             3 -> view.animate().alpha(0.55f).scaleX(0.96f).scaleY(0.96f).setDuration(90).withEndAction {
                 view.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(140).withEndAction { action() }
             }
-            4 -> view.animate().alpha(0.65f).setDuration(100).withEndAction {
-                view.animate().alpha(1f).setDuration(160).withEndAction { action() }
+            4 -> view.animate().alpha(0.65f).scaleX(0.98f).scaleY(0.98f).setDuration(100).withEndAction {
+                view.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(160).withEndAction { action() }
             }
         }
     }
