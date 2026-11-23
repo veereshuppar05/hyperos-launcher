@@ -435,6 +435,7 @@ class MainActivity : Activity() {
         val drawerMode = showingApps || search.text.isNotEmpty()
         val homeSpacing = prefs.getInt("home_tile_spacing", 8)
         val tile = LinearLayout(this).apply {
+            contentDescription = "$label app"
             orientation = 1; gravity = Gravity.CENTER
             setPadding(dp(3), dp(if (drawerMode) 4 else homeSpacing), dp(3), dp(if (drawerMode) 4 else homeSpacing))
             setOnClickListener {
