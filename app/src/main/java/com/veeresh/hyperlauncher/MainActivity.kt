@@ -274,8 +274,9 @@ class MainActivity : Activity() {
     private fun apps(): List<ResolveInfo> {
         cachedApps?.let { return it }
         val hiddenPackages = hidden()
+        val launcherIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
         val loaded = packageManager
-            .queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), PackageManager.MATCH_ALL)
+            .queryIntentActivities(launcherIntent, PackageManager.MATCH_ALL)
             .filter { it.activityInfo.packageName != packageName && it.activityInfo.packageName !in hiddenPackages }
             .distinctBy { it.activityInfo.packageName }
             .sortedBy { it.loadLabel(packageManager).toString().lowercase() }
