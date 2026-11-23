@@ -1597,6 +1597,8 @@ class MainActivity : Activity() {
     }
 
     private fun updateDock(bar: LinearLayout) {
+        val allApps = apps()
+        val appByPackage = allApps.associateBy { it.activityInfo.packageName }
         val list = dock()
         if (list.isEmpty()) {
             val dockHint = TextView(this)
@@ -1608,7 +1610,7 @@ class MainActivity : Activity() {
             return
         }
         list.take(5).forEach { pkg ->
-            val info = apps().firstOrNull { it.activityInfo.packageName == pkg }
+            val info = appByPackage[pkg]
             if (info != null) bar.addView(TextView(this).apply {
                 gravity = Gravity.CENTER
                 translationY = dp(intArrayOf(-6, 0, 6)[prefs.getInt("dock_vertical_offset", 1).coerceIn(0, 2)]).toFloat()
