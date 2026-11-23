@@ -70,7 +70,7 @@ class MainActivity : Activity() {
             else -> 7
         }
     }
-    private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt
+    private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
     private fun bg(c: Int, r: Int) = GradientDrawable().apply { setColor(c); cornerRadius = dp(r).toFloat() }
     private fun pinned(): MutableSet<String> = prefs.getStringSet("pinned", emptySet())?.toMutableSet() ?: mutableSetOf()
     private fun hidden(): MutableSet<String> = prefs.getStringSet("hidden_apps", emptySet())?.toMutableSet() ?: mutableSetOf()
