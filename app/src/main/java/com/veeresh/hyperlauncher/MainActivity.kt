@@ -703,10 +703,27 @@ class MainActivity : Activity() {
         val saved = prefs.getString("wallpaper_uri", null) ?: return null
         return try {
             val uri = Uri.parse(saved)
-            contentResolver.openInputStream(uri)?.use { stream ->
+            val wallpaper = contentResolver.openInputStream(uri)?.use { stream ->
                 BitmapFactory.decodeStream(stream)?.let { BitmapDrawable(resources, it) }
-            }
+            } ?: return null
+            val alphaValues = intArrayOf(0, 40, 80, 120)
+            val dimAlpha = alphaValues[prefs.getInt("wallpaper_dim_level", 0).coerceIn(0, alphaValues.lastIndex)]
+            if (dimAlpha == 0) wallpaper
+            else android.graphics.drawable.LayerDrawable(
+                arrayOf(wallpaper, android.graphics.drawable.ColorDrawable(Color.argb(dimAlpha, 0, 0, 0)))
+            )
         } catch (_: Exception) { null }
+    }
+
+    private fun wallpaperDimPicker() {
+        val options = arrayOf("Off", "Light", "Medium", "Strong")
+        val current = prefs.getInt("wallpaper_dim_level", 0).coerceIn(0, options.lastIndex)
+        AlertDialog.Builder(this).setTitle("Wallpaper dimming")
+            .setSingleChoiceItems(options, current) { dialog, which ->
+                prefs.edit().putInt("wallpaper_dim_level", which).apply()
+                dialog.dismiss()
+                recreate()
+            }.setNegativeButton("Cancel", null).show()
     }
 
     private fun chooseWallpaper() {
@@ -751,7 +768,7 @@ class MainActivity : Activity() {
         val homeLabelOption = if (showHomeLabels) "Hide home labels" else "Show home labels"
         val drawerLabelOption = if (showDrawerLabels) "Hide app drawer labels" else "Show app drawer labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape", "Folder preview layout", if (showFolderLabels) "Hide folder labels" else "Show folder labels", "Folder label size", "Folder app grid", "Opened folder background", "Opened folder shape", if (showFolderAppLabels) "Hide folder app labels" else "Show folder app labels", "Folder app sorting", "Opened folder icon size", "Opened folder app label size")) { _, index ->
+            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape", "Folder preview layout", if (showFolderLabels) "Hide folder labels" else "Show folder labels", "Folder label size", "Folder app grid", "Opened folder background", "Opened folder shape", if (showFolderAppLabels) "Hide folder app labels" else "Show folder app labels", "Folder app sorting", "Opened folder icon size", "Opened folder app label size", "Wallpaper dimming")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> drawerGridPicker()
@@ -788,6 +805,7 @@ class MainActivity : Activity() {
                     29 -> folderSortPicker()
                     30 -> folderOpenIconSizePicker()
                     31 -> folderOpenAppLabelSizePicker()
+                    32 -> wallpaperDimPicker()
                 }
             }.show()
     }
