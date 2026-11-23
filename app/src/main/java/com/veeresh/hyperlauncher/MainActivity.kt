@@ -282,7 +282,7 @@ class MainActivity : Activity() {
             val label = info.loadLabel(packageManager).toString()
             val tile = LinearLayout(this).apply {
                 orientation = 1; gravity = Gravity.CENTER; setPadding(dp(4), dp(8), dp(4), dp(8))
-                setOnClickListener { dialog.dismiss(); animateTap(this) { launch(pkg) } }
+                setOnClickListener { closeFolderDialog(dialog, content) { animateTap(this) { launch(pkg) } } }
             }
             val iconView = TextView(this).apply {
                 gravity = Gravity.CENTER
@@ -301,12 +301,12 @@ class MainActivity : Activity() {
         actions.addView(TextView(this).apply {
             text = "Manage"; textSize = 14f; setTextColor(0xffb8c7ff.toInt()); gravity = Gravity.CENTER
             setPadding(dp(20), dp(10), dp(20), dp(10))
-            setOnClickListener { dialog.dismiss(); folderManage(name) }
+            setOnClickListener { closeFolderDialog(dialog, content) { folderManage(name) } }
         })
         actions.addView(TextView(this).apply {
             text = "Close"; textSize = 14f; setTextColor(Color.WHITE); gravity = Gravity.CENTER
             setPadding(dp(20), dp(10), dp(20), dp(10))
-            setOnClickListener { dialog.dismiss() }
+            setOnClickListener { closeFolderDialog(dialog, content) }
         })
         content.addView(actions)
         dialog.setContentView(content)
@@ -316,6 +316,15 @@ class MainActivity : Activity() {
         dialog.window?.setLayout(dp(320), -2)
         content.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(220)
             .setInterpolator(android.view.animation.DecelerateInterpolator()).start()
+    }
+
+    private fun closeFolderDialog(dialog: android.app.Dialog, content: android.view.View, afterClose: (() -> Unit)? = null) {
+        content.animate().alpha(0f).scaleX(0.82f).scaleY(0.82f)
+            .setDuration(160).setInterpolator(android.view.animation.AccelerateInterpolator())
+            .withEndAction {
+                dialog.dismiss()
+                afterClose?.invoke()
+            }.start()
     }
 
     private fun folderManage(name: String) {
