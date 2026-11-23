@@ -199,7 +199,7 @@ class MainActivity : Activity() {
             setHintTextColor(0xffb7c1d1.toInt())
             setTextColor(Color.WHITE)
             textSize = 15f
-            singleLine = true
+            setSingleLine(true)
             imeOptions = EditorInfo.IME_ACTION_SEARCH
             setPadding(dp(44), 0, dp(48), 0)
             background = null
