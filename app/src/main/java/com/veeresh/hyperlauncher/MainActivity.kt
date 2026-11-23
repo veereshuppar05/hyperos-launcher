@@ -323,7 +323,7 @@ class MainActivity : Activity() {
         }
         val preview = GridLayout(this).apply {
             columnCount = 2
-            background = bg(0xff394255.toInt(), 18)
+            background = folderPreviewBackground()
             setPadding(dp(5), dp(5), dp(5), dp(5))
         }
         all.filter { it.activityInfo.packageName in pkgs }.take(4).forEach { info ->
@@ -578,7 +578,7 @@ class MainActivity : Activity() {
         val homeLabelOption = if (showHomeLabels) "Hide home labels" else "Show home labels"
         val drawerLabelOption = if (showDrawerLabels) "Hide app drawer labels" else "Show app drawer labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background")) { _, index ->
+            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> drawerGridPicker()
@@ -603,6 +603,7 @@ class MainActivity : Activity() {
                     17 -> { prefs.edit().putBoolean("dock_show_labels", !dockShowLabels).apply(); refreshDock() }
                     18 -> homeIconShapePicker()
                     19 -> homeIconBackgroundColorPicker()
+                    20 -> folderPreviewBackgroundPicker()
                 }
             }.show()
     }
@@ -624,6 +625,30 @@ class MainActivity : Activity() {
             }
             .setPositiveButton("Save") { _, _ ->
                 prefs.edit().putStringSet("hidden_apps", selected).apply()
+                render()
+            }.setNegativeButton("Cancel", null).show()
+    }
+
+    private fun folderPreviewBackground(): android.graphics.drawable.Drawable? {
+        val colors = intArrayOf(
+            0xff394255.toInt(),
+            0xff355b91.toInt(),
+            0xff684a91.toInt(),
+            0xff326c63.toInt(),
+            0xff854b62.toInt(),
+            0xff80643a.toInt()
+        )
+        val style = prefs.getInt("folder_preview_background", 0)
+        return if (style == 6) null else bg(colors[style.coerceIn(0, colors.lastIndex)], 18)
+    }
+
+    private fun folderPreviewBackgroundPicker() {
+        val options = arrayOf("Slate", "Blue", "Purple", "Teal", "Rose", "Amber", "Transparent")
+        val current = prefs.getInt("folder_preview_background", 0).coerceIn(0, options.lastIndex)
+        AlertDialog.Builder(this).setTitle("Folder preview background")
+            .setSingleChoiceItems(options, current) { dialog, which ->
+                prefs.edit().putInt("folder_preview_background", which).apply()
+                dialog.dismiss()
                 render()
             }.setNegativeButton("Cancel", null).show()
     }
