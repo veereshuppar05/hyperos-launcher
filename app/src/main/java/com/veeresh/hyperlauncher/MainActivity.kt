@@ -139,13 +139,13 @@ class MainActivity : Activity() {
         pageTransitioning = true
         val direction = if (toApps) -1f else 1f
         grid.animate().cancel()
-        grid.animate().alpha(0f).translationX(dp(24 * direction)).setDuration(110)
+        grid.animate().alpha(0f).translationX(dp(24) * direction).setDuration(110)
             .setInterpolator(android.view.animation.AccelerateInterpolator()).withEndAction {
                 showingApps = toApps
                 pageTransitioning = false
                 if (search.text.isNotEmpty()) search.setText("") else render()
                 grid.alpha = 0f
-                grid.translationX = dp(-24 * direction)
+                grid.translationX = dp(24) * -direction
                 grid.animate().alpha(1f).translationX(0f).setDuration(190)
                     .setInterpolator(android.view.animation.DecelerateInterpolator()).start()
             }.start()
