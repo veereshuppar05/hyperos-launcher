@@ -321,19 +321,25 @@ class MainActivity : Activity() {
             orientation = 1; gravity = Gravity.CENTER; setPadding(dp(2), dp(8), dp(2), dp(8))
             setOnClickListener { animateTap(this) { openFolder(name, pkgs, all) } }; setOnLongClickListener { folderMenu(name); true }
         }
+        val previewColumns = prefs.getInt("folder_preview_grid", 2).coerceIn(2, 4)
+        val previewCellSize = when (previewColumns) {
+            3 -> 16
+            4 -> 12
+            else -> 24
+        }
         val preview = GridLayout(this).apply {
-            columnCount = 2
+            columnCount = previewColumns
             background = folderPreviewBackground()
             setPadding(dp(5), dp(5), dp(5), dp(5))
         }
-        all.filter { it.activityInfo.packageName in pkgs }.take(4).forEach { info ->
+        all.filter { it.activityInfo.packageName in pkgs }.take(previewColumns * previewColumns).forEach { info ->
             val miniIcon = android.widget.ImageView(this).apply {
                 setImageDrawable(info.loadIcon(packageManager))
                 scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
                 setPadding(dp(2), dp(2), dp(2), dp(2))
             }
             preview.addView(miniIcon, GridLayout.LayoutParams().apply {
-                this.width = dp(24); this.height = dp(24)
+                this.width = dp(previewCellSize); this.height = dp(previewCellSize)
             })
         }
         tile.addView(preview, LinearLayout.LayoutParams(dp(58), dp(58)))
@@ -578,7 +584,7 @@ class MainActivity : Activity() {
         val homeLabelOption = if (showHomeLabels) "Hide home labels" else "Show home labels"
         val drawerLabelOption = if (showDrawerLabels) "Hide app drawer labels" else "Show app drawer labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape")) { _, index ->
+            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape", "Folder preview layout")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> drawerGridPicker()
@@ -605,6 +611,7 @@ class MainActivity : Activity() {
                     19 -> homeIconBackgroundColorPicker()
                     20 -> folderPreviewBackgroundPicker()
                     21 -> folderPreviewShapePicker()
+                    22 -> folderPreviewGridPicker()
                 }
             }.show()
     }
@@ -651,6 +658,18 @@ class MainActivity : Activity() {
             3 -> null
             else -> bg(color, 18)
         }
+    }
+
+    private fun folderPreviewGridPicker() {
+        val options = arrayOf("2 × 2 (up to 4 apps)", "3 × 3 (up to 9 apps)", "4 × 4 (up to 16 apps)")
+        val values = intArrayOf(2, 3, 4)
+        val current = values.indexOf(prefs.getInt("folder_preview_grid", 2)).coerceAtLeast(0)
+        AlertDialog.Builder(this).setTitle("Folder preview layout")
+            .setSingleChoiceItems(options, current) { dialog, which ->
+                prefs.edit().putInt("folder_preview_grid", values[which]).apply()
+                dialog.dismiss()
+                render()
+            }.setNegativeButton("Cancel", null).show()
     }
 
     private fun folderPreviewShapePicker() {
