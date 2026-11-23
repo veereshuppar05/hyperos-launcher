@@ -457,7 +457,7 @@ class MainActivity : Activity() {
                 maxLines = 2
                 ellipsize = android.text.TextUtils.TruncateAt.END
             }, LinearLayout.LayoutParams(dp(cellWidthDp - 4), dp(34)))
-            val tileHeight = iconSize + 12 + if (showHomeLabels) 34 else 0 + 12
+            val tileHeight = iconSize + 12 + (if (showHomeLabels) 34 else 0) + 12
             box.addView(tile, GridLayout.LayoutParams().apply {
                 width = dp(cellWidthDp)
                 height = dp(tileHeight)
