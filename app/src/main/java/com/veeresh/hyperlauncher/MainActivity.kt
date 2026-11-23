@@ -768,7 +768,7 @@ class MainActivity : Activity() {
         val homeLabelOption = if (showHomeLabels) "Hide home labels" else "Show home labels"
         val drawerLabelOption = if (showDrawerLabels) "Hide app drawer labels" else "Show app drawer labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape", "Folder preview layout", if (showFolderLabels) "Hide folder labels" else "Show folder labels", "Folder label size", "Folder app grid", "Opened folder background", "Opened folder shape", if (showFolderAppLabels) "Hide folder app labels" else "Show folder app labels", "Folder app sorting", "Opened folder icon size", "Opened folder app label size", "Wallpaper dimming", "Home icon background opacity", "Home label colour", "App drawer label colour")) { _, index ->
+            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape", "Folder preview layout", if (showFolderLabels) "Hide folder labels" else "Show folder labels", "Folder label size", "Folder app grid", "Opened folder background", "Opened folder shape", if (showFolderAppLabels) "Hide folder app labels" else "Show folder app labels", "Folder app sorting", "Opened folder icon size", "Opened folder app label size", "Wallpaper dimming", "Home icon background opacity", "Home label colour", "App drawer label colour", "Dock background shape")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> drawerGridPicker()
@@ -809,6 +809,7 @@ class MainActivity : Activity() {
                     33 -> homeIconBackgroundOpacityPicker()
                     34 -> homeLabelColorPicker()
                     35 -> drawerLabelColorPicker()
+                    36 -> dockBackgroundShapePicker()
                 }
             }.show()
     }
@@ -1219,6 +1220,17 @@ class MainActivity : Activity() {
         }.setNegativeButton("Cancel", null).show()
     }
 
+    private fun dockBackgroundShapePicker() {
+        val options = arrayOf("Rounded (default)", "Soft rounded", "Subtle corners", "Square")
+        val current = prefs.getInt("dock_background_shape", 0).coerceIn(0, options.lastIndex)
+        AlertDialog.Builder(this).setTitle("Dock background shape")
+            .setSingleChoiceItems(options, current) { dialog, which ->
+                prefs.edit().putInt("dock_background_shape", which).apply()
+                dialog.dismiss()
+                refreshDock()
+            }.setNegativeButton("Cancel", null).show()
+    }
+
     private fun dockBackgroundPicker() {
         val options = arrayOf("Glass panel", "Transparent", "Outline", "Dark panel")
         val current = prefs.getInt("dock_background_style", 0).coerceIn(0, options.lastIndex)
@@ -1231,18 +1243,20 @@ class MainActivity : Activity() {
     }
 
     private fun dockBackground(): android.graphics.drawable.Drawable? {
+        val radius = intArrayOf(24, 18, 10, 2)[
+            prefs.getInt("dock_background_shape", 0).coerceIn(0, 3)
+        ]
         return when (prefs.getInt("dock_background_style", 0)) {
             1 -> null
             2 -> GradientDrawable().apply {
                 setColor(0x222f3748)
                 setStroke(dp(1), 0xff596579.toInt())
-                cornerRadius = dp(24).toFloat()
+                cornerRadius = dp(radius).toFloat()
             }
-            3 -> bg(0xff151922.toInt(), 24)
-            else -> bg(0xff242833.toInt(), 24)
+            3 -> bg(0xff151922.toInt(), radius)
+            else -> bg(0xff242833.toInt(), radius)
         }
     }
-
     private fun refreshDock() {
         var ancestor: android.view.ViewParent? = grid.parent
         while (ancestor != null && ancestor !is LinearLayout) ancestor = ancestor.parent
