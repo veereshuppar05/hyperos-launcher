@@ -299,7 +299,7 @@ class MainActivity : Activity() {
         content.addView(box)
         val actions = LinearLayout(this).apply { gravity = Gravity.CENTER; setPadding(0, dp(8), 0, 0) }
         actions.addView(TextView(this).apply {
-            text = "Manage"; textSize = 14f; setTextColor(0xffb8c7ff.toInt(); gravity = Gravity.CENTER
+            text = "Manage"; textSize = 14f; setTextColor(0xffb8c7ff.toInt()); gravity = Gravity.CENTER
             setPadding(dp(20), dp(10), dp(20), dp(10))
             setOnClickListener { dialog.dismiss(); folderManage(name) }
         })
