@@ -207,6 +207,7 @@ class MainActivity : Activity() {
 
     private fun render() {
         if (!::grid.isInitialized) return
+        grid.columnCount = columns
         grid.removeAllViews()
         sectionHeaders.clear()
         if (::alphabetRail.isInitialized) alphabetRail.visibility = if (showingApps && search.text.isEmpty()) android.view.View.VISIBLE else android.view.View.GONE
