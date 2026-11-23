@@ -21,6 +21,7 @@ import android.view.MotionEvent
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.GridLayout
+import android.widget.HorizontalScrollView
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -40,13 +41,17 @@ class MainActivity : Activity() {
     private lateinit var homeHeader: LinearLayout
     private lateinit var drawerHeader: LinearLayout
     private lateinit var searchContainer: FrameLayout
+    private lateinit var categoryScroll: HorizontalScrollView
+    private lateinit var categoryRow: LinearLayout
     private lateinit var homeGestureHint: TextView
+    private var selectedDrawerCategory = "All"
+    private val drawerCategoryNames = listOf("All", "Communication", "Entertainment", "Photography", "Tools", "Games", "Travel", "Finance & Business", "Personalization", "TV & Music", "Video")
     private var showingApps = false
     private var pageTransitioning = false
     private var lastLaunchPackage: String? = null
     private var lastLaunchTimeMs = 0L
-    private val columns: Int get() = prefs.getInt("grid_columns", 5)
-    private val drawerColumns: Int get() = prefs.getInt("drawer_columns", 5)
+    private val columns: Int get() = prefs.getInt("grid_columns", 4)
+    private val drawerColumns: Int get() = prefs.getInt("drawer_columns", 4)
     private val prefs by lazy { getSharedPreferences("hyperlauncher", MODE_PRIVATE) }
     private val showLabels: Boolean get() = prefs.getBoolean("show_labels", true)
     private val showHomeLabels: Boolean get() = prefs.getBoolean("home_show_labels", showLabels)
@@ -57,7 +62,7 @@ class MainActivity : Activity() {
     private val folderLabelSize: Float get() = prefs.getFloat("folder_label_size_sp", 10.5f)
     private val iconSizeDp: Int get() = prefs.getInt("icon_size_dp", 58)
     private val drawerIconSizeDp: Int get() = prefs.getInt("drawer_icon_size_dp", 64)
-    private val dockIconSizeDp: Int get() = prefs.getInt("dock_icon_size_dp", 34)
+    private val dockIconSizeDp: Int get() = prefs.getInt("dock_icon_size_dp", 42)
     private val dockShowLabels: Boolean get() = prefs.getBoolean("dock_show_labels", false)
     private val dockBarHeightDp: Int get() = (if (dockShowLabels) dockIconSizeDp + 32 else 60) + intArrayOf(-8, 0, 8)[prefs.getInt("dock_height_style", 1).coerceIn(0, 2)]
     private val labelSize: Float get() = prefs.getFloat("label_size_sp", 11f)
@@ -172,6 +177,7 @@ class MainActivity : Activity() {
         if (android.os.Build.VERSION.SDK_INT >= 29) {
             window.isNavigationBarContrastEnforced = false
         }
+        initializeDefaultHome()
         buildUi()
         render()
     }
@@ -213,13 +219,6 @@ class MainActivity : Activity() {
             orientation = 1
             gravity = Gravity.CENTER_VERTICAL
         }
-        clockColumn.addView(TextView(this).apply {
-            text = "YOUR SPACE"
-            textSize = 10f
-            letterSpacing = 0.18f
-            setTextColor(0xffd9e2f3.toInt())
-            setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL))
-        }, LinearLayout.LayoutParams(-1, dp(20)))
         clockColumn.addView(TextClock(this).apply {
             format12Hour = "h:mm"
             format24Hour = "HH:mm"
@@ -238,20 +237,7 @@ class MainActivity : Activity() {
             contentDescription = "Today's date"
         }, LinearLayout.LayoutParams(-1, dp(26)))
         homeHeader.addView(clockColumn, LinearLayout.LayoutParams(0, -1, 1f))
-        homeHeader.addView(TextView(this).apply {
-            text = "⚙"
-            textSize = 22f
-            gravity = Gravity.CENTER
-            setTextColor(Color.WHITE)
-            background = GradientDrawable().apply {
-                shape = GradientDrawable.OVAL
-                setColor(0x334f607b)
-                setStroke(dp(1), 0x55ffffff)
-            }
-            contentDescription = "Launcher settings"
-            setOnClickListener { settings() }
-        }, LinearLayout.LayoutParams(dp(46), dp(46)))
-        root.addView(homeHeader, LinearLayout.LayoutParams(-1, dp(154)).apply {
+        root.addView(homeHeader, LinearLayout.LayoutParams(-1, dp(140)).apply {
             bottomMargin = dp(18)
         })
 
@@ -338,8 +324,21 @@ class MainActivity : Activity() {
             override fun afterTextChanged(s: Editable?) {}
         })
         root.addView(searchContainer, LinearLayout.LayoutParams(-1, dp(48)).apply {
-            bottomMargin = dp(12)
+            bottomMargin = dp(8)
         })
+
+        categoryRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        categoryScroll = HorizontalScrollView(this).apply {
+            isHorizontalScrollBarEnabled = false
+            clipToPadding = false
+            visibility = android.view.View.GONE
+            setPadding(0, 0, 0, dp(8))
+            addView(categoryRow, HorizontalScrollView.LayoutParams(-2, dp(36)))
+        }
+        root.addView(categoryScroll, LinearLayout.LayoutParams(-1, dp(44)))
 
         val scroll = ScrollView(this).apply {
             isVerticalScrollBarEnabled = false
@@ -392,12 +391,12 @@ class MainActivity : Activity() {
         root.addView(contentFrame, LinearLayout.LayoutParams(-1, 0, 1f))
 
         homeGestureHint = TextView(this).apply {
-            text = "⌃   SWIPE UP FOR ALL APPS   ⌃"
-            textSize = 10f
-            letterSpacing = 0.12f
+            text = "⌃"
+            textSize = 18f
             gravity = Gravity.CENTER
-            setTextColor(0xffc6d0e0.toInt())
+            setTextColor(0xff91a9d4.toInt())
             contentDescription = "Swipe up to open all apps"
+            setOnClickListener { switchPage(true) }
         }
         root.addView(homeGestureHint, LinearLayout.LayoutParams(-1, dp(27)))
 
@@ -428,6 +427,7 @@ class MainActivity : Activity() {
         homeHeader.visibility = if (showingApps) android.view.View.GONE else android.view.View.VISIBLE
         drawerHeader.visibility = if (showingApps) android.view.View.VISIBLE else android.view.View.GONE
         searchContainer.visibility = if (showingApps) android.view.View.VISIBLE else android.view.View.GONE
+        categoryScroll.visibility = if (showingApps) android.view.View.VISIBLE else android.view.View.GONE
         homeGestureHint.visibility = if (showingApps) android.view.View.GONE else android.view.View.VISIBLE
         search.hint = "Search all apps"
         search.contentDescription = "Search all installed apps"
@@ -514,7 +514,7 @@ class MainActivity : Activity() {
         val queryTokens = normalizedQuery.split(Regex("\\s+")).filter { it.isNotBlank() }
         val searchLabels = cachedAppSearchLabels.orEmpty()
         val searchPackages = cachedAppSearchPackages.orEmpty()
-        val chosen = if (showingApps || query.isNotEmpty()) {
+        val unfilteredChosen = if (showingApps || query.isNotEmpty()) {
             val matches = all.filter { info ->
                 val label = searchLabels[info.activityInfo.packageName] ?: normalizeSearchText(info.loadLabel(packageManager).toString())
                 val packageName = searchPackages[info.activityInfo.packageName] ?: info.activityInfo.packageName.lowercase()
@@ -535,6 +535,10 @@ class MainActivity : Activity() {
                 } else ranked
             } else matches
         } else all.filter { it.activityInfo.packageName in home }
+        if (showingApps) updateCategoryTabs(all)
+        val chosen = if (showingApps && selectedDrawerCategory != "All") {
+            unfilteredChosen.filter { appCategory(it) == selectedDrawerCategory }
+        } else unfilteredChosen
         if (!showingApps && query.isEmpty()) folders.forEach { (name, packages) -> folderTile(name, packages, all) }
         val activeColumns = if (showingApps) drawerColumns else columns
         val width = (resources.displayMetrics.widthPixels - dp(32)) / activeColumns
@@ -594,6 +598,127 @@ class MainActivity : Activity() {
             }, GridLayout.LayoutParams().apply {
                 this.width = resources.displayMetrics.widthPixels - dp(32)
                 height = dp(150)
+            })
+        }
+    }
+
+    private fun initializeDefaultHome() {
+        if (prefs.getBoolean("initial_home_populated", false)) return
+        // Preserve any layout the user has already started configuring.
+        if (prefs.contains("pinned") || prefs.contains("dock")) {
+            prefs.edit().putBoolean("initial_home_populated", true).apply()
+            return
+        }
+        val available = packageManager.queryIntentActivities(
+            Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER),
+            PackageManager.MATCH_ALL
+        ).filter { it.activityInfo.packageName != packageName }
+            .distinctBy { it.activityInfo.packageName }
+            .sortedBy { it.loadLabel(packageManager).toString().lowercase() }
+
+        fun findByTerms(vararg terms: String): ResolveInfo? = available.firstOrNull { info ->
+            val searchable = (info.activityInfo.packageName + " " + info.loadLabel(packageManager)).lowercase()
+            terms.any { searchable.contains(it) }
+        }
+
+        val preferredGroups = listOf(
+            arrayOf("phone", "dialer"),
+            arrayOf("messages", "messaging", "sms"),
+            arrayOf("chrome", "browser"),
+            arrayOf("camera"),
+            arrayOf("photos", "gallery"),
+            arrayOf("contacts"),
+            arrayOf("clock"),
+            arrayOf("calendar"),
+            arrayOf("maps"),
+            arrayOf("gmail", "mail"),
+            arrayOf("play store", "playstore"),
+            arrayOf("settings")
+        )
+        val selected = linkedMapOf<String, ResolveInfo>()
+        preferredGroups.forEach { terms ->
+            findByTerms(*terms)?.let { selected[it.activityInfo.packageName] = it }
+        }
+        available.forEach { info ->
+            if (selected.size < 12) selected.putIfAbsent(info.activityInfo.packageName, info)
+        }
+        val pinnedPackages = selected.keys
+        val dockGroups = listOf(
+            arrayOf("phone", "dialer"),
+            arrayOf("messages", "messaging", "sms"),
+            arrayOf("chrome", "browser"),
+            arrayOf("camera")
+        )
+        val dockPackages = dockGroups.mapNotNull { terms ->
+            findByTerms(*terms)?.activityInfo?.packageName
+        }.distinct().take(4).ifEmpty { selected.keys.take(4) }
+        prefs.edit()
+            .putStringSet("pinned", pinnedPackages.toSet())
+            .putString("dock", dockPackages.joinToString(","))
+            .putBoolean("initial_home_populated", true)
+            .apply()
+    }
+
+    private fun appCategory(info: ResolveInfo): String {
+        val packageName = info.activityInfo.packageName.lowercase()
+        val label = info.loadLabel(packageManager).toString().lowercase()
+        val value = "$packageName $label"
+        fun hasAny(vararg words: String) = words.any { value.contains(it) }
+
+        val systemCategory = try {
+            packageManager.getApplicationInfo(info.activityInfo.packageName, 0).category
+        } catch (_: Exception) { android.content.pm.ApplicationInfo.CATEGORY_UNDEFINED }
+
+        return when {
+            systemCategory == android.content.pm.ApplicationInfo.CATEGORY_GAME ||
+                hasAny("game", "games", "gaming") -> "Games"
+            hasAny("whatsapp", "telegram", "signal", "messag", "sms", "dialer", "phone", "call", "contacts", "truecaller", "skype", "meet", "zoom", "discord") -> "Communication"
+            hasAny("camera", "photo", "gallery", "selfie", "image editor", "picsart", "snapseed", "lightroom") ||
+                systemCategory == android.content.pm.ApplicationInfo.CATEGORY_IMAGE -> "Photography"
+            hasAny("netflix", "hotstar", "prime video", "sonyliv", "jiocinema", "youtube", "video player", "ott", "stream") -> "Entertainment"
+            hasAny("spotify", "music", "player", "radio", "podcast", "audio", "fm") ||
+                systemCategory == android.content.pm.ApplicationInfo.CATEGORY_AUDIO -> "TV & Music"
+            hasAny("video", "mx player", "vlc", "reels", "shorts") ||
+                systemCategory == android.content.pm.ApplicationInfo.CATEGORY_VIDEO -> "Video"
+            hasAny("maps", "navigation", "uber", "ola", "irctc", "rail", "flight", "travel", "booking", "cab", "taxi") ||
+                systemCategory == android.content.pm.ApplicationInfo.CATEGORY_MAPS -> "Travel"
+            hasAny("bank", "bhim", "upi", "pay", "wallet", "finance", "credit", "loan", "cashify", "business", "gst", "stock", "trading", "insurance") -> "Finance & Business"
+            hasAny("theme", "wallpaper", "icon pack", "launcher", "font", "personaliz") -> "Personalization"
+            else -> "Tools"
+        }
+    }
+
+    private fun updateCategoryTabs(all: List<ResolveInfo>) {
+        if (!::categoryRow.isInitialized) return
+        val availableCategories = all.map { appCategory(it) }.toSet()
+        if (selectedDrawerCategory != "All" && selectedDrawerCategory !in availableCategories) {
+            selectedDrawerCategory = "All"
+        }
+        categoryRow.removeAllViews()
+        drawerCategoryNames.filter { it == "All" || it in availableCategories }.forEach { category ->
+            val selected = category == selectedDrawerCategory
+            val chip = TextView(this).apply {
+                text = category
+                textSize = 11f
+                gravity = Gravity.CENTER
+                setPadding(dp(14), 0, dp(14), 0)
+                setTextColor(if (selected) 0xfff4f7ff.toInt() else 0xffb5c2d8.toInt())
+                background = GradientDrawable().apply {
+                    setColor(if (selected) 0xff42536e.toInt() else 0xff202631.toInt())
+                    cornerRadius = dp(18).toFloat()
+                    if (selected) setStroke(dp(1), 0x558da9d7)
+                }
+                isClickable = true
+                isFocusable = true
+                contentDescription = "$category category"
+                setOnClickListener {
+                    selectedDrawerCategory = category
+                    updateCategoryTabs(apps())
+                    render()
+                }
+            }
+            categoryRow.addView(chip, LinearLayout.LayoutParams(-2, dp(32)).apply {
+                rightMargin = dp(7)
             })
         }
     }
