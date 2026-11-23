@@ -561,13 +561,15 @@ class MainActivity : Activity() {
 
     private fun homeQuickCustomize() {
         AlertDialog.Builder(this).setTitle("Home customization")
-             .setItems(arrayOf("Home grid", "Home icon size", "Home label size", "Change wallpaper", "More launcher settings")) { _, index ->
+             .setItems(arrayOf("Home grid", "Home icon size", "Home label size", "Home icon shape", "Home icon background", "Change wallpaper", "More launcher settings")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> iconSizePicker()
                     2 -> homeLabelSizePicker()
-                    3 -> chooseWallpaper()
-                    4 -> settings()
+                    3 -> homeIconShapePicker()
+                    4 -> homeIconBackgroundColorPicker()
+                    5 -> chooseWallpaper()
+                    6 -> settings()
                 }
             }.show()
     }
@@ -576,7 +578,7 @@ class MainActivity : Activity() {
         val homeLabelOption = if (showHomeLabels) "Hide home labels" else "Show home labels"
         val drawerLabelOption = if (showDrawerLabels) "Hide app drawer labels" else "Show app drawer labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape")) { _, index ->
+            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> drawerGridPicker()
@@ -600,6 +602,7 @@ class MainActivity : Activity() {
                     16 -> dockBackgroundPicker()
                     17 -> { prefs.edit().putBoolean("dock_show_labels", !dockShowLabels).apply(); refreshDock() }
                     18 -> homeIconShapePicker()
+                    19 -> homeIconBackgroundColorPicker()
                 }
             }.show()
     }
@@ -625,15 +628,28 @@ class MainActivity : Activity() {
             }.setNegativeButton("Cancel", null).show()
     }
 
+    private fun homeIconBackgroundColor(): Int {
+        val colors = intArrayOf(
+            0xff2f3544.toInt(),
+            0xff355b91.toInt(),
+            0xff684a91.toInt(),
+            0xff326c63.toInt(),
+            0xff854b62.toInt(),
+            0xff80643a.toInt()
+        )
+        return colors[prefs.getInt("home_icon_bg_color", 0).coerceIn(0, colors.lastIndex)]
+    }
+
     private fun homeIconBackground(): android.graphics.drawable.Drawable? {
+        val color = homeIconBackgroundColor()
         return when (prefs.getInt("home_icon_shape", 0)) {
             1 -> GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
-                setColor(0xff2f3544.toInt())
+                setColor(color)
             }
-            2 -> bg(0xff2f3544.toInt(), 24)
+            2 -> bg(color, 24)
             3 -> null
-            else -> bg(0xff2f3544.toInt(), 18)
+            else -> bg(color, 18)
         }
     }
 
@@ -643,6 +659,17 @@ class MainActivity : Activity() {
         AlertDialog.Builder(this).setTitle("Home icon shape")
             .setSingleChoiceItems(options, current) { dialog, which ->
                 prefs.edit().putInt("home_icon_shape", which).apply()
+                dialog.dismiss()
+                render()
+            }.setNegativeButton("Cancel", null).show()
+    }
+
+    private fun homeIconBackgroundColorPicker() {
+        val options = arrayOf("Slate", "Blue", "Purple", "Teal", "Rose", "Amber")
+        val current = prefs.getInt("home_icon_bg_color", 0).coerceIn(0, options.lastIndex)
+        AlertDialog.Builder(this).setTitle("Home icon background")
+            .setSingleChoiceItems(options, current) { dialog, which ->
+                prefs.edit().putInt("home_icon_bg_color", which).apply()
                 dialog.dismiss()
                 render()
             }.setNegativeButton("Cancel", null).show()
