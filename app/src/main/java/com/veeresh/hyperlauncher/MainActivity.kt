@@ -177,7 +177,16 @@ class MainActivity : Activity() {
                      else all.filter { it.activityInfo.packageName in home }
         if (!showingApps && query.isEmpty()) folderMap().forEach { (name, packages) -> folderTile(name, packages, all) }
         val width = (resources.displayMetrics.widthPixels - dp(32)) / columns
-        chosen.forEach { appTile(it, width) }
+        if (showingApps && query.isEmpty()) {
+            chosen.groupBy { it.loadLabel(packageManager).toString().firstOrNull()?.uppercaseChar() ?: '#' }
+                .toSortedMap()
+                .forEach { (letter, group) ->
+                    appSectionHeader(letter)
+                    group.forEach { appTile(it, width) }
+                }
+        } else {
+            chosen.forEach { appTile(it, width) }
+        }
         if (chosen.isEmpty() && !showingApps && query.isEmpty() && folderMap().isEmpty()) {
             grid.addView(TextView(this).apply {
                 text = "Home screen is empty. Open Apps and long-press an app to pin it."
@@ -189,6 +198,21 @@ class MainActivity : Activity() {
                 height = dp(150)
             })
         }
+    }
+
+    private fun appSectionHeader(letter: Char) {
+        val header = TextView(this).apply {
+            text = letter.toString()
+            textSize = 13f
+            setTextColor(0xffaebbd6.toInt())
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(8), 0, 0, 0)
+        }
+        grid.addView(header, GridLayout.LayoutParams().apply {
+            width = resources.displayMetrics.widthPixels - dp(32)
+            height = dp(30)
+            columnSpec = GridLayout.spec(0, columns)
+        })
     }
 
     private fun appTile(info: ResolveInfo, width: Int) {
