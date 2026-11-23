@@ -268,16 +268,17 @@ class MainActivity : Activity() {
         if (::alphabetRail.isInitialized) alphabetRail.visibility = if (showingApps && search.text.isEmpty()) android.view.View.VISIBLE else android.view.View.GONE
         val all = apps()
         val query = search.text.toString().trim()
-        val folderMembers = folderMap().values.flatten().toSet()
+        val folders = folderMap()
+        val folderMembers = folders.values.flatten().toSet()
         val home = pinned().filter { it !in folderMembers }
-        val normalizedQuery = query.trim().lowercase()
+        val normalizedQuery = query.lowercase()
         val searchLabels = cachedAppSearchLabels.orEmpty()
         val chosen = if (showingApps || query.isNotEmpty()) all.filter { info ->
                          (searchLabels[info.activityInfo.packageName] ?: info.loadLabel(packageManager).toString().lowercase()).contains(normalizedQuery) ||
                          info.activityInfo.packageName.lowercase().contains(normalizedQuery)
                      }
                      else all.filter { it.activityInfo.packageName in home }
-        if (!showingApps && query.isEmpty()) folderMap().forEach { (name, packages) -> folderTile(name, packages, all) }
+        if (!showingApps && query.isEmpty()) folders.forEach { (name, packages) -> folderTile(name, packages, all) }
         val activeColumns = if (showingApps) drawerColumns else columns
         val width = (resources.displayMetrics.widthPixels - dp(32)) / activeColumns
         if (showingApps && query.isEmpty()) {
@@ -294,7 +295,7 @@ class MainActivity : Activity() {
         } else {
             chosen.forEach { appTile(it, width) }
         }
-        if (chosen.isEmpty() && !showingApps && query.isEmpty() && folderMap().isEmpty()) {
+        if (chosen.isEmpty() && !showingApps && query.isEmpty() && folders.isEmpty()) {
             grid.addView(TextView(this).apply {
                 text = "Home screen is empty. Open Apps and long-press an app to pin it."
                 gravity = Gravity.CENTER
