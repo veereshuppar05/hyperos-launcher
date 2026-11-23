@@ -39,6 +39,8 @@ class MainActivity : Activity() {
     private val iconSizeDp: Int get() = prefs.getInt("icon_size_dp", 58)
     private val drawerIconSizeDp: Int get() = prefs.getInt("drawer_icon_size_dp", 64)
     private val dockIconSizeDp: Int get() = prefs.getInt("dock_icon_size_dp", 34)
+    private val dockShowLabels: Boolean get() = prefs.getBoolean("dock_show_labels", false)
+    private val dockBarHeightDp: Int get() = if (dockShowLabels) dockIconSizeDp + 32 else 60
     private val labelSize: Float get() = prefs.getFloat("label_size_sp", 11f)
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
@@ -171,7 +173,7 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER; orientation = 0; background = dockBackground()
             setPadding(dp(6), dp(6), dp(6), dp(6))
         }
-        root.addView(dockBar, LinearLayout.LayoutParams(-1, dp(60)))
+        root.addView(dockBar, LinearLayout.LayoutParams(-1, dp(dockBarHeightDp)))
         setContentView(root)
 
         search.addTextChangedListener(object : TextWatcher {
@@ -568,7 +570,7 @@ class MainActivity : Activity() {
     private fun settings() {
         val labelOption = if (showLabels) "Hide app labels" else "Show app labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "App label size", "Home spacing", "Change wallpaper", "Reset wallpaper", labelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background")) { _, index ->
+            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "App label size", "Home spacing", "Change wallpaper", "Reset wallpaper", labelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> drawerGridPicker()
@@ -588,6 +590,7 @@ class MainActivity : Activity() {
                     12 -> manageHiddenApps()
                     13 -> dockIconSizePicker()
                     14 -> dockBackgroundPicker()
+                    15 -> { prefs.edit().putBoolean("dock_show_labels", !dockShowLabels).apply(); refreshDock() }
                 }
             }.show()
     }
@@ -762,7 +765,7 @@ class MainActivity : Activity() {
             orientation = 0; gravity = Gravity.CENTER; background = dockBackground()
             setPadding(dp(6), dp(6), dp(6), dp(6))
         }
-        parent.addView(bar, LinearLayout.LayoutParams(-1, dp(60)))
+        parent.addView(bar, LinearLayout.LayoutParams(-1, dp(dockBarHeightDp)))
         updateDock(bar)
     }
 
@@ -781,11 +784,17 @@ class MainActivity : Activity() {
             val info = apps().firstOrNull { it.activityInfo.packageName == pkg }
             if (info != null) bar.addView(TextView(this).apply {
                 gravity = Gravity.CENTER
+                includeFontPadding = false
+                maxLines = 1
+                text = if (dockShowLabels) info.loadLabel(packageManager).toString() else ""
+                textSize = 10f
+                setTextColor(0xffe6eaf2.toInt())
+                contentDescription = info.loadLabel(packageManager).toString()
                 val drawable = info.loadIcon(packageManager); drawable.setBounds(0, 0, dp(dockIconSizeDp), dp(dockIconSizeDp))
                 setCompoundDrawables(null, drawable, null, null)
                 setOnClickListener { animateTap(this) { launch(pkg) } }
                 setOnLongClickListener { appMenu(pkg, info.loadLabel(packageManager).toString()); true }
-            }, LinearLayout.LayoutParams(0, dp(44), 1f))
+            }, LinearLayout.LayoutParams(0, dp(if (dockShowLabels) dockIconSizeDp + 20 else 44), 1f))
         }
     }
 
