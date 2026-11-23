@@ -1426,7 +1426,7 @@ class MainActivity : Activity() {
                 setCompoundDrawables(null, drawable, null, null)
                 setOnClickListener { animateTap(this) { launch(pkg) } }
                 setOnLongClickListener { appMenu(pkg, info.loadLabel(packageManager).toString()); true }
-            }, LinearLayout.LayoutParams(0, dp(if (dockShowLabels) dockIconSizeDp + 20 else 44), 1f).apply {
+            }, LinearLayout.LayoutParams(-2, dp(if (dockShowLabels) dockIconSizeDp + 20 else 44)).apply {
                 val gap = intArrayOf(2, 8, 16)[prefs.getInt("dock_icon_spacing", 1).coerceIn(0, 2)]
                 leftMargin = dp(gap); rightMargin = dp(gap)
             })
