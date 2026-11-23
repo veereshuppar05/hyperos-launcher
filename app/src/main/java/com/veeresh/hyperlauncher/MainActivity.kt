@@ -578,7 +578,7 @@ class MainActivity : Activity() {
         val homeLabelOption = if (showHomeLabels) "Hide home labels" else "Show home labels"
         val drawerLabelOption = if (showDrawerLabels) "Hide app drawer labels" else "Show app drawer labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background")) { _, index ->
+            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> drawerGridPicker()
@@ -604,6 +604,7 @@ class MainActivity : Activity() {
                     18 -> homeIconShapePicker()
                     19 -> homeIconBackgroundColorPicker()
                     20 -> folderPreviewBackgroundPicker()
+                    21 -> folderPreviewShapePicker()
                 }
             }.show()
     }
@@ -639,7 +640,28 @@ class MainActivity : Activity() {
             0xff80643a.toInt()
         )
         val style = prefs.getInt("folder_preview_background", 0)
-        return if (style == 6) null else bg(colors[style.coerceIn(0, colors.lastIndex)], 18)
+        if (style == 6) return null
+        val color = colors[style.coerceIn(0, colors.lastIndex)]
+        return when (prefs.getInt("folder_preview_shape", 0)) {
+            1 -> GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(color)
+            }
+            2 -> bg(color, 24)
+            3 -> null
+            else -> bg(color, 18)
+        }
+    }
+
+    private fun folderPreviewShapePicker() {
+        val options = arrayOf("Rounded square", "Circle", "Squircle", "No background")
+        val current = prefs.getInt("folder_preview_shape", 0).coerceIn(0, options.lastIndex)
+        AlertDialog.Builder(this).setTitle("Folder preview shape")
+            .setSingleChoiceItems(options, current) { dialog, which ->
+                prefs.edit().putInt("folder_preview_shape", which).apply()
+                dialog.dismiss()
+                render()
+            }.setNegativeButton("Cancel", null).show()
     }
 
     private fun folderPreviewBackgroundPicker() {
