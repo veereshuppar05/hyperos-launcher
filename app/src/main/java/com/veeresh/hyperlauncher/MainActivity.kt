@@ -1657,8 +1657,19 @@ class MainActivity : Activity() {
     private fun launch(pkg: String) {
         val now = System.currentTimeMillis()
         if (pkg == lastLaunchPackage && now - lastLaunchTimeMs < 500L) return
-        lastLaunchPackage = pkg
-        lastLaunchTimeMs = now
-        packageManager.getLaunchIntentForPackage(pkg)?.let { startActivity(it) } ?: Toast.makeText(this, "App unavailable", Toast.LENGTH_SHORT).show()
+        val intent = packageManager.getLaunchIntentForPackage(pkg)
+        if (intent == null) {
+            Toast.makeText(this, "App unavailable", Toast.LENGTH_SHORT).show()
+            return
+        }
+        try {
+            startActivity(intent)
+            lastLaunchPackage = pkg
+            lastLaunchTimeMs = now
+        } catch (_: android.content.ActivityNotFoundException) {
+            Toast.makeText(this, "Unable to open app", Toast.LENGTH_SHORT).show()
+        } catch (_: SecurityException) {
+            Toast.makeText(this, "Unable to open app", Toast.LENGTH_SHORT).show()
+        }
     }
 }
