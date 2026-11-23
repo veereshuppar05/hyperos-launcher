@@ -128,6 +128,13 @@ class MainActivity : Activity() {
             false
         }
         appScroll = scroll
+        scroll.isLongClickable = true
+        scroll.setOnLongClickListener {
+            if (!showingApps && search.text.isEmpty()) {
+                homeQuickCustomize()
+                true
+            } else false
+        }
         grid = GridLayout(this).apply { columnCount = columns }
         scroll.addView(grid)
         val contentFrame = FrameLayout(this)
