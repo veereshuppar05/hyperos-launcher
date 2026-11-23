@@ -232,19 +232,28 @@ class MainActivity : Activity() {
     }
 
     private var cachedApps: List<ResolveInfo>? = null
+    private var cachedAppSearchLabels: Map<String, String>? = null
     private var hasResumedOnce = false
 
-    private fun apps(): List<ResolveInfo> = cachedApps ?: packageManager
-        .queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), PackageManager.MATCH_ALL)
-        .filter { it.activityInfo.packageName != packageName && it.activityInfo.packageName !in hidden() }
-        .distinctBy { it.activityInfo.packageName }
-        .sortedBy { it.loadLabel(packageManager).toString().lowercase()
-        }.also { cachedApps = it }
+    private fun apps(): List<ResolveInfo> {
+        cachedApps?.let { return it }
+        val loaded = packageManager
+            .queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), PackageManager.MATCH_ALL)
+            .filter { it.activityInfo.packageName != packageName && it.activityInfo.packageName !in hidden() }
+            .distinctBy { it.activityInfo.packageName }
+            .sortedBy { it.loadLabel(packageManager).toString().lowercase() }
+        cachedApps = loaded
+        cachedAppSearchLabels = loaded.associate { info ->
+            info.activityInfo.packageName to info.loadLabel(packageManager).toString().lowercase()
+        }
+        return loaded
+    }
 
     override fun onResume() {
         super.onResume()
         if (hasResumedOnce) {
             cachedApps = null
+            cachedAppSearchLabels = null
             if (::grid.isInitialized) render()
         } else {
             hasResumedOnce = true
@@ -261,9 +270,11 @@ class MainActivity : Activity() {
         val query = search.text.toString()
         val folderMembers = folderMap().values.flatten().toSet()
         val home = pinned().filter { it !in folderMembers }
+        val normalizedQuery = query.trim().lowercase()
+        val searchLabels = cachedAppSearchLabels.orEmpty()
         val chosen = if (showingApps || query.isNotEmpty()) all.filter { info ->
-                         info.loadLabel(packageManager).toString().contains(query, true) ||
-                         info.activityInfo.packageName.contains(query, true)
+                         (searchLabels[info.activityInfo.packageName] ?: info.loadLabel(packageManager).toString().lowercase()).contains(normalizedQuery) ||
+                         info.activityInfo.packageName.lowercase().contains(normalizedQuery)
                      }
                      else all.filter { it.activityInfo.packageName in home }
         if (!showingApps && query.isEmpty()) folderMap().forEach { (name, packages) -> folderTile(name, packages, all) }
