@@ -721,6 +721,10 @@ class MainActivity : Activity() {
                 if (checked) selected.add(pkg) else selected.remove(pkg)
             }
             .setPositiveButton(if (add) "Add selected" else "Remove selected") { _, _ ->
+                if (selected.isEmpty()) {
+                    Toast.makeText(this, "Select at least one app", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
                 if (add) members.addAll(selected) else members.removeAll(selected)
                 folders[name] = members
                 saveFolders(folders)
