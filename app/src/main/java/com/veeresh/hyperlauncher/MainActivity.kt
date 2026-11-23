@@ -433,8 +433,10 @@ class MainActivity : Activity() {
             5 -> 32
             else -> 44
         }
+        val folderApps = all.filter { it.activityInfo.packageName in pkgs }
+        val tileHeightDp = iconSize + 12 + (if (showHomeLabels) 34 else 0) + 12
         val box = GridLayout(this).apply { columnCount = folderColumns }
-        all.filter { it.activityInfo.packageName in pkgs }.forEach { info ->
+        folderApps.forEach { info ->
             val pkg = info.activityInfo.packageName
             val label = info.loadLabel(packageManager).toString()
             val tile = LinearLayout(this).apply {
@@ -457,13 +459,20 @@ class MainActivity : Activity() {
                 maxLines = 2
                 ellipsize = android.text.TextUtils.TruncateAt.END
             }, LinearLayout.LayoutParams(dp(cellWidthDp - 4), dp(34)))
-            val tileHeight = iconSize + 12 + (if (showHomeLabels) 34 else 0) + 12
             box.addView(tile, GridLayout.LayoutParams().apply {
                 width = dp(cellWidthDp)
-                height = dp(tileHeight)
+                height = dp(tileHeightDp)
             })
         }
-        content.addView(box)
+        val folderRows = ((folderApps.size + folderColumns - 1) / folderColumns).coerceAtLeast(1)
+        val desiredGridHeight = dp(folderRows * tileHeightDp)
+        val maxGridHeight = (resources.displayMetrics.heightPixels - dp(240)).coerceAtLeast(dp(180))
+        val folderScroll = ScrollView(this).apply {
+            isFillViewport = false
+            isVerticalScrollBarEnabled = false
+            addView(box, ScrollView.LayoutParams(-1, -2))
+        }
+        content.addView(folderScroll, LinearLayout.LayoutParams(-1, minOf(desiredGridHeight, maxGridHeight)))
         val actions = LinearLayout(this).apply { gravity = Gravity.CENTER; setPadding(0, dp(8), 0, 0) }
         actions.addView(TextView(this).apply {
             text = "Manage"; textSize = 14f; setTextColor(0xffb8c7ff.toInt()); gravity = Gravity.CENTER
