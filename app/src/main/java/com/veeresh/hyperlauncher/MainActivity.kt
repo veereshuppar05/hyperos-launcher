@@ -170,7 +170,10 @@ class MainActivity : Activity() {
         val query = search.text.toString()
         val folderMembers = folderMap().values.flatten().toSet()
         val home = pinned().filter { it !in folderMembers }
-        val chosen = if (showingApps || query.isNotEmpty()) all.filter { it.loadLabel(packageManager).toString().contains(query, true) }
+        val chosen = if (showingApps || query.isNotEmpty()) all.filter { info ->
+                         info.loadLabel(packageManager).toString().contains(query, true) ||
+                         info.activityInfo.packageName.contains(query, true)
+                     }
                      else all.filter { it.activityInfo.packageName in home }
         if (!showingApps && query.isEmpty()) folderMap().forEach { (name, packages) -> folderTile(name, packages, all) }
         val width = (resources.displayMetrics.widthPixels - dp(32)) / columns
