@@ -226,10 +226,14 @@ class MainActivity : Activity() {
         val width = (resources.displayMetrics.widthPixels - dp(32)) / activeColumns
         if (showingApps && query.isEmpty()) {
             chosen.groupBy { it.loadLabel(packageManager).toString().firstOrNull()?.uppercaseChar() ?: '#' }
-                .toSortedMap()
+                .toSortedMap(compareBy<Char> { if (it == '#') 27 else it.code - 'A'.code })
+                .let { sections ->
+                    if (prefs.getBoolean("drawer_reverse_sort", false)) sections.toSortedMap(compareByDescending<Char> { if (it == '#') 27 else it.code - 'A'.code }) else sections
+                }
                 .forEach { (letter, group) ->
                     appSectionHeader(letter)
-                    group.forEach { appTile(it, width) }
+                    val sortedGroup = if (prefs.getBoolean("drawer_reverse_sort", false)) group.reversed() else group
+                    sortedGroup.forEach { appTile(it, width) }
                 }
         } else {
             chosen.forEach { appTile(it, width) }
@@ -540,20 +544,21 @@ class MainActivity : Activity() {
     private fun settings() {
         val labelOption = if (showLabels) "Hide app labels" else "Show app labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Home grid", "App drawer grid", "Customize dock", "Icon size", "Change wallpaper", "Reset wallpaper", labelOption, "Clear home pins", "Manage hidden apps")) { _, index ->
+            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Icon size", "Change wallpaper", "Reset wallpaper", labelOption, "Clear home pins", "Manage hidden apps")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> drawerGridPicker()
-                    2 -> dockPicker()
-                    3 -> iconSizePicker()
-                    4 -> chooseWallpaper()
-                    5 -> { prefs.edit().remove("wallpaper_uri").apply(); recreate() }
-                    6 -> { prefs.edit().putBoolean("show_labels", !showLabels).apply(); render() }
-                    7 -> AlertDialog.Builder(this).setTitle("Clear home pins?")
+                    2 -> drawerSortPicker()
+                    3 -> dockPicker()
+                    4 -> iconSizePicker()
+                    5 -> chooseWallpaper()
+                    6 -> { prefs.edit().remove("wallpaper_uri").apply(); recreate() }
+                    7 -> { prefs.edit().putBoolean("show_labels", !showLabels).apply(); render() }
+                    8 -> AlertDialog.Builder(this).setTitle("Clear home pins?")
                         .setMessage("Remove all pinned apps from the Home tab?")
                         .setPositiveButton("Clear") { _, _ -> prefs.edit().putStringSet("pinned", emptySet()).apply(); render() }
                         .setNegativeButton("Cancel", null).show()
-                    8 -> manageHiddenApps()
+                    9 -> manageHiddenApps()
                 }
             }.show()
     }
@@ -603,6 +608,17 @@ class MainActivity : Activity() {
             }.setNegativeButton("Cancel", null).show()
     }
 
+
+    private fun drawerSortPicker() {
+        val options = arrayOf("A → Z", "Z → A")
+        val current = if (prefs.getBoolean("drawer_reverse_sort", false)) 1 else 0
+        AlertDialog.Builder(this).setTitle("App drawer sorting")
+            .setSingleChoiceItems(options, current) { dialog, which ->
+                prefs.edit().putBoolean("drawer_reverse_sort", which == 1).apply()
+                dialog.dismiss()
+                render()
+            }.setNegativeButton("Cancel", null).show()
+    }
 
     private fun iconSizePicker() {
         val sizes = arrayOf("Small", "Medium", "Large")
