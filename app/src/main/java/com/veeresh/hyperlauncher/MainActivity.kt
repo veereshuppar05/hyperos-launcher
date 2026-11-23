@@ -705,9 +705,10 @@ class MainActivity : Activity() {
         val all = apps()
         val folders = folderMap()
         val members = folders[name]?.toMutableSet() ?: mutableSetOf()
+        val otherFolderMembers = folders.filterKeys { it != name }.values.flatten().toSet()
         val candidates = all.filter { info ->
             val pkg = info.activityInfo.packageName
-            if (add) pkg !in members else pkg in members
+            if (add) pkg !in members && pkg !in otherFolderMembers else pkg in members
         }
         if (candidates.isEmpty()) {
             Toast.makeText(this, if (add) "No apps available to add" else "Folder is empty", Toast.LENGTH_SHORT).show()
