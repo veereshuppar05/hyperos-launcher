@@ -20,6 +20,7 @@ import android.widget.EditText
 import android.widget.GridLayout
 import android.widget.LinearLayout
 import android.widget.ScrollView
+import android.widget.SeekBar
 import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -1247,27 +1248,50 @@ class MainActivity : Activity() {
 
 
     private fun homeIconOpacityPicker() {
-        val options = arrayOf("100% — Full", "75% — Slightly faded", "50% — Faded")
-        val values = intArrayOf(255, 191, 128)
-        val current = values.indexOf(prefs.getInt("home_icon_alpha", 255)).coerceAtLeast(0)
-        AlertDialog.Builder(this).setTitle("Home icon opacity")
-            .setSingleChoiceItems(options, current) { dialog, which ->
-                prefs.edit().putInt("home_icon_alpha", values[which]).apply()
-                dialog.dismiss()
-                render()
-            }.setNegativeButton("Cancel", null).show()
+        iconOpacityPicker("Home icon opacity", "home_icon_alpha")
     }
 
     private fun drawerIconOpacityPicker() {
-        val options = arrayOf("100% — Full", "75% — Slightly faded", "50% — Faded")
-        val values = intArrayOf(255, 191, 128)
-        val current = values.indexOf(prefs.getInt("drawer_icon_alpha", 255)).coerceAtLeast(0)
-        AlertDialog.Builder(this).setTitle("App drawer icon opacity")
-            .setSingleChoiceItems(options, current) { dialog, which ->
-                prefs.edit().putInt("drawer_icon_alpha", values[which]).apply()
-                dialog.dismiss()
+        iconOpacityPicker("App drawer icon opacity", "drawer_icon_alpha")
+    }
+
+    private fun iconOpacityPicker(title: String, preferenceKey: String) {
+        val currentAlpha = prefs.getInt(preferenceKey, 255).coerceIn(0, 255)
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(24), dp(12), dp(24), dp(8))
+        }
+        val valueLabel = TextView(this).apply {
+            text = "${currentAlpha * 100 / 255}%"
+            textSize = 18f
+            gravity = Gravity.CENTER
+        }
+        val seekBar = SeekBar(this).apply {
+            max = 100
+            progress = currentAlpha * 100 / 255
+        }
+        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
+                valueLabel.text = "${progress}%"
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar) {}
+        })
+        layout.addView(valueLabel)
+        layout.addView(seekBar)
+        AlertDialog.Builder(this).setTitle(title)
+            .setView(layout)
+            .setPositiveButton("Apply") { _, _ ->
+                val alpha = seekBar.progress * 255 / 100
+                prefs.edit().putInt(preferenceKey, alpha).apply()
                 render()
-            }.setNegativeButton("Cancel", null).show()
+            }
+            .setNegativeButton("Cancel", null)
+            .setNeutralButton("Reset") { _, _ ->
+                prefs.edit().putInt(preferenceKey, 255).apply()
+                render()
+            }
+            .show()
     }
 
     private fun verticalSwipeToggle() {
