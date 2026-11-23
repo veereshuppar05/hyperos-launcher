@@ -619,6 +619,8 @@ class MainActivity : Activity() {
             columnCount = previewColumns
             background = folderPreviewBackground()
             setPadding(dp(5), dp(5), dp(5), dp(5))
+            clipToOutline = true
+            elevation = dp(2).toFloat()
         }
         val previewApps = all.filter { it.activityInfo.packageName in pkgs }
             .let { if (prefs.getBoolean("folder_reverse_sort", false)) it.reversed() else it }
@@ -1213,7 +1215,16 @@ class MainActivity : Activity() {
             }
             2 -> bg(color, 24)
             3 -> null
-            else -> bg(color, 18)
+            else -> GradientDrawable(
+                GradientDrawable.Orientation.TL_BR,
+                intArrayOf(
+                    Color.argb(190, Color.red(color), Color.green(color), Color.blue(color)),
+                    Color.argb(145, Color.red(color), Color.green(color), Color.blue(color))
+                )
+            ).apply {
+                cornerRadius = dp(20).toFloat()
+                setStroke(dp(1), 0x55ffffff)
+            }
         }
     }
 
@@ -1835,7 +1846,16 @@ class MainActivity : Activity() {
                 cornerRadius = dp(radius).toFloat()
             }
             3 -> bg(applyOpacity(0xff151922.toInt()), radius)
-            else -> bg(applyOpacity(0xff242833.toInt()), radius)
+            else -> GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                intArrayOf(
+                    applyOpacity(0xcc52627a.toInt()),
+                    applyOpacity(0x99505b70.toInt())
+                )
+            ).apply {
+                setStroke(dp(1), applyOpacity(0x66ffffff))
+                cornerRadius = dp(radius).toFloat()
+            }
         }
     }
     private fun refreshDock() {
@@ -1909,8 +1929,9 @@ class MainActivity : Activity() {
                 setCompoundDrawables(null, drawable, null, null)
                 setOnClickListener { animateTap(this) { launch(pkg) } }
                 setOnLongClickListener { appMenu(pkg, info.loadLabel(packageManager).toString()); true }
-            }, LinearLayout.LayoutParams(-2, dp(if (dockShowLabels) dockIconSizeDp + 20 else 44)).apply {
-                val gap = intArrayOf(2, 8, 16)[prefs.getInt("dock_icon_spacing", 1).coerceIn(0, 2)]
+            }, LinearLayout.LayoutParams(0, dp(if (dockShowLabels) dockIconSizeDp + 20 else 44), 1f).apply {
+                // Equal-width slots keep the five-icon dock balanced on different screen sizes.
+                val gap = intArrayOf(2, 6, 10)[prefs.getInt("dock_icon_spacing", 1).coerceIn(0, 2)]
                 leftMargin = dp(gap); rightMargin = dp(gap)
             })
         }
