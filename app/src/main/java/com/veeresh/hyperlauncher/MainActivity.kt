@@ -76,7 +76,8 @@ class MainActivity : Activity() {
         root.addView(header, LinearLayout.LayoutParams(-1, dp(48)))
 
         search = EditText(this).apply {
-            hint = "Search apps"; setHintTextColor(0xff9ba3b2.toInt()); setTextColor(Color.WHITE)
+            hint = if (showingApps) "Search all apps" else "Search apps"
+            setHintTextColor(0xff9ba3b2.toInt()); setTextColor(Color.WHITE)
             setSingleLine(true); setPadding(dp(16), 0, dp(16), 0); background = bg(0xff272b36.toInt(), 24)
         }
         root.addView(search, LinearLayout.LayoutParams(-1, dp(48)).apply { topMargin = dp(12) })
@@ -194,16 +195,24 @@ class MainActivity : Activity() {
             orientation = 1; gravity = Gravity.CENTER; setPadding(dp(2), dp(8), dp(2), dp(8))
             setOnClickListener { animateTap(this) { launch(pkg) } }; setOnLongClickListener { appMenu(pkg, label); true }
         }
+        val drawer = showingApps
+        val displayIconSize = iconSizeDp + if (drawer) 4 else 0
         val icon = TextView(this).apply {
-            gravity = Gravity.CENTER; background = bg(0xff2f3544.toInt(), 18)
-            val drawable = info.loadIcon(packageManager); drawable.setBounds(0, 0, dp(iconSizeDp - 10), dp(iconSizeDp - 10))
+            gravity = Gravity.CENTER
+            background = if (drawer) null else bg(0xff2f3544.toInt(), 18)
+            val drawable = info.loadIcon(packageManager)
+            drawable.setBounds(0, 0, dp(displayIconSize - 10), dp(displayIconSize - 10))
             setCompoundDrawables(null, drawable, null, null)
         }
-        tile.addView(icon, LinearLayout.LayoutParams(dp(iconSizeDp), dp(iconSizeDp)))
+        tile.addView(icon, LinearLayout.LayoutParams(dp(displayIconSize), dp(displayIconSize)))
         if (showLabels) tile.addView(TextView(this).apply {
-            text = label; textSize = 10.5f; gravity = Gravity.CENTER; setTextColor(Color.WHITE); maxLines = 2
-        }, LinearLayout.LayoutParams(-1, dp(34)))
-        grid.addView(tile, GridLayout.LayoutParams().apply { this.width = width; height = dp(iconSizeDp + if (showLabels) 44 else 20) })
+            text = label; textSize = if (drawer) 11f else 10.5f
+            gravity = Gravity.CENTER; setTextColor(Color.WHITE); maxLines = 2
+        }, LinearLayout.LayoutParams(-1, dp(36)))
+        grid.addView(tile, GridLayout.LayoutParams().apply {
+            this.width = width
+            height = dp(displayIconSize + if (showLabels) 48 else 20)
+        })
     }
 
     private fun folderTile(name: String, pkgs: Set<String>, all: List<ResolveInfo>) {
