@@ -768,7 +768,7 @@ class MainActivity : Activity() {
         val homeLabelOption = if (showHomeLabels) "Hide home labels" else "Show home labels"
         val drawerLabelOption = if (showDrawerLabels) "Hide app drawer labels" else "Show app drawer labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape", "Folder preview layout", if (showFolderLabels) "Hide folder labels" else "Show folder labels", "Folder label size", "Folder app grid", "Opened folder background", "Opened folder shape", if (showFolderAppLabels) "Hide folder app labels" else "Show folder app labels", "Folder app sorting", "Opened folder icon size", "Opened folder app label size", "Wallpaper dimming", "Home icon background opacity", "Home label colour", "App drawer label colour", "Dock background shape", "Dock background opacity", "Dock label size", "Dock label colour", "Dock side padding", "Dock icon spacing", if (prefs.getBoolean("dock_label_bold", false)) "Dock label: Bold" else "Dock label: Regular", "Dock label background")) { _, index ->
+            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape", "Folder preview layout", if (showFolderLabels) "Hide folder labels" else "Show folder labels", "Folder label size", "Folder app grid", "Opened folder background", "Opened folder shape", if (showFolderAppLabels) "Hide folder app labels" else "Show folder app labels", "Folder app sorting", "Opened folder icon size", "Opened folder app label size", "Wallpaper dimming", "Home icon background opacity", "Home label colour", "App drawer label colour", "Dock background shape", "Dock background opacity", "Dock label size", "Dock label colour", "Dock side padding", "Dock icon spacing", if (prefs.getBoolean("dock_label_bold", false)) "Dock label: Bold" else "Dock label: Regular", "Dock label background", "Dock icon opacity")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> drawerGridPicker()
@@ -817,6 +817,7 @@ class MainActivity : Activity() {
                     41 -> dockIconSpacingPicker()
                     42 -> { prefs.edit().putBoolean("dock_label_bold", !prefs.getBoolean("dock_label_bold", false)).apply(); refreshDock() }
                     43 -> dockLabelBackgroundPicker()
+                    44 -> dockIconOpacityPicker()
                 }
             }.show()
     }
@@ -1196,6 +1197,18 @@ class MainActivity : Activity() {
             }.setNegativeButton("Cancel", null).show()
     }
 
+    private fun dockIconOpacityPicker() {
+        val options = arrayOf("50%", "75%", "100%")
+        val values = intArrayOf(128, 191, 255)
+        val current = values.indexOf(prefs.getInt("dock_icon_alpha", 255)).coerceAtLeast(0)
+        AlertDialog.Builder(this).setTitle("Dock icon opacity")
+            .setSingleChoiceItems(options, current) { dialog, which ->
+                prefs.edit().putInt("dock_icon_alpha", values[which]).apply()
+                dialog.dismiss()
+                refreshDock()
+            }.setNegativeButton("Cancel", null).show()
+    }
+
     private fun dockLabelBackgroundPicker() {
         val options = arrayOf("None", "Subtle pill", "Dark capsule")
         val current = prefs.getInt("dock_label_background", 0).coerceIn(0, 2)
@@ -1371,7 +1384,7 @@ class MainActivity : Activity() {
                 setPadding(dp(2), dp(1), dp(2), dp(1))
                 setTypeface(null, if (prefs.getBoolean("dock_label_bold", false)) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
                 contentDescription = info.loadLabel(packageManager).toString()
-                val drawable = info.loadIcon(packageManager); drawable.setBounds(0, 0, dp(dockIconSizeDp), dp(dockIconSizeDp))
+                val drawable = info.loadIcon(packageManager); drawable.alpha = prefs.getInt("dock_icon_alpha", 255).coerceIn(0, 255); drawable.setBounds(0, 0, dp(dockIconSizeDp), dp(dockIconSizeDp))
                 setCompoundDrawables(null, drawable, null, null)
                 setOnClickListener { animateTap(this) { launch(pkg) } }
                 setOnLongClickListener { appMenu(pkg, info.loadLabel(packageManager).toString()); true }
