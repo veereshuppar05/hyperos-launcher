@@ -1207,7 +1207,7 @@ class MainActivity : Activity() {
     private fun dockLabelSizePicker() {
         val options = arrayOf("Small (8 sp)", "Medium (10 sp)", "Large (12 sp)", "Extra large (14 sp)")
         val values = floatArrayOf(8f, 10f, 12f, 14f)
-        val current = values.indexOfFirst { it == prefs.getFloat("dock_label_size_sp", 10f) }.coerceAtLeast(0
+        val current = values.indexOfFirst { it == prefs.getFloat("dock_label_size_sp", 10f) }.coerceAtLeast(0)
         AlertDialog.Builder(this).setTitle("Dock label size")
             .setSingleChoiceItems(options, current) { dialog, which ->
                 prefs.edit().putFloat("dock_label_size_sp", values[which]).apply()
