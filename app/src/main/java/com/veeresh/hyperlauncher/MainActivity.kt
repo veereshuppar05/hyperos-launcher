@@ -550,6 +550,19 @@ class MainActivity : Activity() {
         }
     }
 
+    private fun homeQuickCustomize() {
+        AlertDialog.Builder(this).setTitle("Home customization")
+            .setItems(arrayOf("Home grid", "Home icon size", "App label size", "Change wallpaper", "More launcher settings")) { _, index ->
+                when (index) {
+                    0 -> homeGridPicker()
+                    1 -> iconSizePicker()
+                    2 -> appLabelSizePicker()
+                    3 -> chooseWallpaper()
+                    4 -> settings()
+                }
+            }.show()
+    }
+
     private fun settings() {
         val labelOption = if (showLabels) "Hide app labels" else "Show app labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
