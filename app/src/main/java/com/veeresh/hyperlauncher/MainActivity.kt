@@ -123,7 +123,29 @@ class MainActivity : Activity() {
                 }
             }
         }
-        root.addView(search, LinearLayout.LayoutParams(-1, dp(48)).apply { topMargin = dp(12) })
+        val searchContainer = FrameLayout(this).apply {
+            background = bg(0xff272b36.toInt(), 24)
+        }
+        search.setPadding(dp(16), 0, dp(48), 0)
+        search.background = null
+        searchContainer.addView(search, FrameLayout.LayoutParams(-1, -1))
+        val clearSearch = TextView(this).apply {
+            text = "×"; textSize = 26f; setTextColor(0xffb7bfce.toInt()
+            ); gravity = Gravity.CENTER; visibility = if (search.text.isNullOrEmpty()) android.view.View.GONE else android.view.View.VISIBLE
+            contentDescription = "Clear search"
+            setOnClickListener { search.text.clear(); search.requestFocus() }
+        }
+        searchContainer.addView(clearSearch, FrameLayout.LayoutParams(dp(48), -1).apply {
+            gravity = Gravity.RIGHT or Gravity.CENTER_VERTICAL
+        })
+        search.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                clearSearch.visibility = if (s.isNullOrEmpty()) android.view.View.GONE else android.view.View.VISIBLE
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+        root.addView(searchContainer, LinearLayout.LayoutParams(-1, dp(48)).apply { topMargin = dp(12) })
 
         val tabs = LinearLayout(this).apply { orientation = 0; setPadding(0, dp(10), 0, dp(8)) }
         tabs.addView(tab("Home") { switchPage(false) }, LinearLayout.LayoutParams(0, dp(40), 1f))
