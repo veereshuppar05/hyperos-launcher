@@ -439,44 +439,97 @@ class MainActivity : Activity() {
         val folderApps = all.filter { it.activityInfo.packageName in pkgs }
             .let { if (prefs.getBoolean("folder_reverse_sort", false)) it.reversed() else it }
         val tileHeightDp = iconSize + 12 + (if (showFolderAppLabels) 34 else 0) + 12
-        val box = GridLayout(this).apply { columnCount = folderColumns }
-        folderApps.forEach { info ->
-            val pkg = info.activityInfo.packageName
-            val label = info.loadLabel(packageManager).toString()
-            val tile = LinearLayout(this).apply {
-                orientation = 1; gravity = Gravity.CENTER
-                setPadding(dp(2), dp(6), dp(2), dp(6))
-                setOnClickListener { closeFolderDialog(dialog, content) { animateTap(this) { launch(pkg) } } }
-            }
-            val iconView = TextView(this).apply {
-                gravity = Gravity.CENTER
-                val drawable = info.loadIcon(packageManager)
-                drawable.setBounds(0, 0, dp(iconSize), dp(iconSize))
-                setCompoundDrawables(null, drawable, null, null)
-            }
-            tile.addView(iconView, LinearLayout.LayoutParams(dp(cellWidthDp), dp(iconSize + 12)))
-            if (showFolderAppLabels) tile.addView(TextView(this).apply {
-                text = label
-                textSize = if (folderColumns == 5) minOf(homeLabelSize, 9f) else homeLabelSize
-                gravity = Gravity.CENTER
-                setTextColor(Color.WHITE)
-                maxLines = 2
-                ellipsize = android.text.TextUtils.TruncateAt.END
-            }, LinearLayout.LayoutParams(dp(cellWidthDp - 4), dp(34)))
-            box.addView(tile, GridLayout.LayoutParams().apply {
-                width = dp(cellWidthDp)
-                height = dp(tileHeightDp)
-            })
+
+        val folderSearch = EditText(this).apply {
+            hint = "Search apps in $name"
+            setSingleLine(true)
+            textSize = 14f
+            setTextColor(Color.WHITE)
+            setHintTextColor(0xff9ba3b2.toInt())
+            setPadding(dp(14), 0, dp(14), 0)
+            background = bg(0xff303643.toInt(), 16)
         }
-        val folderRows = ((folderApps.size + folderColumns - 1) / folderColumns).coerceAtLeast(1)
-        val desiredGridHeight = dp(folderRows * tileHeightDp)
-        val maxGridHeight = (resources.displayMetrics.heightPixels - dp(240)).coerceAtLeast(dp(180))
+        content.addView(folderSearch, LinearLayout.LayoutParams(-1, dp(42)).apply {
+            bottomMargin = dp(10)
+        })
+
+        val box = GridLayout(this).apply { columnCount = folderColumns }
         val folderScroll = ScrollView(this).apply {
             isFillViewport = false
             isVerticalScrollBarEnabled = false
             addView(box, FrameLayout.LayoutParams(-1, -2))
         }
-        content.addView(folderScroll, LinearLayout.LayoutParams(-1, minOf(desiredGridHeight, maxGridHeight)))
+        content.addView(folderScroll, LinearLayout.LayoutParams(-1, dp(120)))
+
+        fun updateFolderGrid(rawQuery: String) {
+            val query = rawQuery.trim()
+            val visibleApps = folderApps.filter { info ->
+                val label = info.loadLabel(packageManager).toString()
+                val pkg = info.activityInfo.packageName
+                query.isEmpty() || label.contains(query, ignoreCase = true) ||
+                    pkg.contains(query, ignoreCase = true)
+            }
+            box.removeAllViews()
+            visibleApps.forEach { info ->
+                val pkg = info.activityInfo.packageName
+                val label = info.loadLabel(packageManager).toString()
+                val tile = LinearLayout(this).apply {
+                    orientation = 1; gravity = Gravity.CENTER
+                    setPadding(dp(2), dp(6), dp(2), dp(6))
+                    setOnClickListener { closeFolderDialog(dialog, content) { animateTap(this) { launch(pkg) } } }
+                }
+                val iconView = TextView(this).apply {
+                    gravity = Gravity.CENTER
+                    val drawable = info.loadIcon(packageManager)
+                    drawable.setBounds(0, 0, dp(iconSize), dp(iconSize))
+                    setCompoundDrawables(null, drawable, null, null)
+                }
+                tile.addView(iconView, LinearLayout.LayoutParams(dp(cellWidthDp), dp(iconSize + 12)))
+                if (showFolderAppLabels) tile.addView(TextView(this).apply {
+                    text = label
+                    textSize = if (folderColumns == 5) minOf(homeLabelSize, 9f) else homeLabelSize
+                    gravity = Gravity.CENTER
+                    setTextColor(Color.WHITE)
+                    maxLines = 2
+                    ellipsize = android.text.TextUtils.TruncateAt.END
+                }, LinearLayout.LayoutParams(dp(cellWidthDp - 4), dp(34)))
+                box.addView(tile, GridLayout.LayoutParams().apply {
+                    width = dp(cellWidthDp)
+                    height = dp(tileHeightDp)
+                })
+            }
+            if (visibleApps.isEmpty()) {
+                val empty = TextView(this).apply {
+                    text = if (folderApps.isEmpty()) "This folder is empty" else "No matching apps"
+                    textSize = 13f
+                    gravity = Gravity.CENTER
+                    setTextColor(0xffaeb7c7.toInt())
+                }
+                box.addView(empty, GridLayout.LayoutParams().apply {
+                    width = dp(dialogWidthDp - 36)
+                    height = dp(90)
+                    columnSpec = GridLayout.spec(0, folderColumns)
+                })
+            }
+            val folderRows = ((visibleApps.size + folderColumns - 1) / folderColumns).coerceAtLeast(1)
+            val desiredGridHeight = dp(folderRows * tileHeightDp)
+            val maxGridHeight = (resources.displayMetrics.heightPixels - dp(300)).coerceAtLeast(dp(140))
+            folderScroll.layoutParams = (folderScroll.layoutParams as LinearLayout.LayoutParams).apply {
+                height = minOf(desiredGridHeight, maxGridHeight)
+            }
+            folderScroll.scrollTo(0, 0)
+            folderScroll.requestLayout()
+        }
+
+        folderSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                updateFolderGrid(s?.toString().orEmpty())
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+        updateFolderGrid("")
+
         val actions = LinearLayout(this).apply { gravity = Gravity.CENTER; setPadding(0, dp(8), 0, 0) }
         actions.addView(TextView(this).apply {
             text = "Manage"; textSize = 14f; setTextColor(0xffb8c7ff.toInt()); gravity = Gravity.CENTER
