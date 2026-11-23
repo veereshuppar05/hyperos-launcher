@@ -1665,11 +1665,14 @@ class MainActivity : Activity() {
     private fun updateDock(bar: LinearLayout) {
         val list = dock()
         if (list.isEmpty()) {
-            val dockHint = TextView(this)
-            dockHint.text = "Dock • Customize from ⋮"
-            dockHint.gravity = Gravity.CENTER
-            dockHint.textSize = 12f
-            dockHint.setTextColor(0xffcdd3df.toInt())
+            val dockHint = TextView(this).apply {
+                text = "＋  Add apps to dock"
+                gravity = Gravity.CENTER
+                textSize = 13f
+                setTextColor(0xffcdd3df.toInt())
+                contentDescription = "Add apps to dock"
+                setOnClickListener { dockPicker() }
+            }
             bar.addView(dockHint, LinearLayout.LayoutParams(-1, dp(44)))
             return
         }
