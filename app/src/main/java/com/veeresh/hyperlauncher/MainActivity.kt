@@ -470,7 +470,7 @@ class MainActivity : Activity() {
         val folderScroll = ScrollView(this).apply {
             isFillViewport = false
             isVerticalScrollBarEnabled = false
-            addView(box, ScrollView.LayoutParams(-1, -2))
+            addView(box, FrameLayout.LayoutParams(-1, -2))
         }
         content.addView(folderScroll, LinearLayout.LayoutParams(-1, minOf(desiredGridHeight, maxGridHeight)))
         val actions = LinearLayout(this).apply { gravity = Gravity.CENTER; setPadding(0, dp(8), 0, 0) }
