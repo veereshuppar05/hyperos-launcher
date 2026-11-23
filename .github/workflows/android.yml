@@ -3,6 +3,8 @@ name: HyperLauncher v1.0 Release
 on:
   workflow_dispatch:
   push:
+    branches:
+      - "v1.0-release"
     tags:
       - "v1.0.0"
 
