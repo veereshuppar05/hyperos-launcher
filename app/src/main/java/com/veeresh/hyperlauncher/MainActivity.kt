@@ -339,7 +339,7 @@ class MainActivity : Activity() {
                 "Share app" -> {
                     val shareIntent = Intent(Intent.ACTION_SEND).apply {
                         type = "text/plain"
-                        putExtra(Intent.EXTRA_TEXT, "$label\\nhttps://play.google.com/store/apps/details?id=$pkg")
+                        putExtra(Intent.EXTRA_TEXT, "$label\nhttps://play.google.com/store/apps/details?id=$pkg")
                     }
                     startActivity(Intent.createChooser(shareIntent, "Share $label"))
                 }
