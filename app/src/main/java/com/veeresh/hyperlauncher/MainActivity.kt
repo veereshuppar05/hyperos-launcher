@@ -15,7 +15,6 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.Gravity
-import android.view.GestureDetector
 import android.view.MotionEvent
 import android.widget.EditText
 import android.widget.GridLayout
@@ -87,26 +86,33 @@ class MainActivity : Activity() {
         root.addView(tabs)
 
         val scroll = ScrollView(this)
-        val swipeDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
-            override fun onFling(e1: MotionEvent?, e2: MotionEvent?, velocityX: Float, velocityY: Float): Boolean {
-                if (e1 != null && e2 != null && kotlin.math.abs(e2.x - e1.x) > dp(90) &&
-                    kotlin.math.abs(e2.x - e1.x) > kotlin.math.abs(e2.y - e1.y) * 1.25f &&
-                    kotlin.math.abs(velocityX) > dp(250)) {
-                    if (e2.x < e1.x && !showingApps) {
-                        showingApps = true
-                        search.setText("")
-                        render()
-                    } else if (e2.x > e1.x && showingApps) {
-                        showingApps = false
-                        search.setText("")
-                        render()
-                    }
-                    return true
+        var touchStartX = 0f
+        var touchStartY = 0f
+        scroll.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    touchStartX = event.x
+                    touchStartY = event.y
                 }
-                return false
+                MotionEvent.ACTION_UP -> {
+                    val deltaX = event.x - touchStartX
+                    val deltaY = event.y - touchStartY
+                    if (kotlin.math.abs(deltaX) > dp(90) &&
+                        kotlin.math.abs(deltaX) > kotlin.math.abs(deltaY) * 1.25f) {
+                        if (deltaX < 0 && !showingApps) {
+                            showingApps = true
+                            search.setText("")
+                            render()
+                        } else if (deltaX > 0 && showingApps) {
+                            showingApps = false
+                            search.setText("")
+                            render()
+                        }
+                    }
+                }
             }
-        })
-        scroll.setOnTouchListener { _, event -> swipeDetector.onTouchEvent(event); false }
+            false
+        }
         grid = GridLayout(this).apply { columnCount = columns }
         scroll.addView(grid)
         root.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
