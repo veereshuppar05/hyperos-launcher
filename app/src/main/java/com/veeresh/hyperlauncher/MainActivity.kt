@@ -219,6 +219,7 @@ class MainActivity : Activity() {
         contentFrame.addView(scroll, FrameLayout.LayoutParams(-1, -1))
         alphabetRail = TextView(this).apply {
             text = "A\nB\nC\nD\nE\nF\nG\nH\nI\nJ\nK\nL\nM\nN\nO\nP\nQ\nR\nS\nT\nU\nV\nW\nX\nY\nZ\n#"
+            contentDescription = "Alphabetical app navigation. Touch or drag to jump to a letter."
             textSize = 9f
             setTextColor(0xffb9c5df.toInt())
             gravity = Gravity.CENTER
