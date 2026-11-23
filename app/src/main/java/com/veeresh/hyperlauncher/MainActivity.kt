@@ -456,11 +456,15 @@ class MainActivity : Activity() {
                 return@setPositiveButton
             }
             val folders = folderMap()
+            if (name in folders) {
+                Toast.makeText(this, "A folder with that name already exists", Toast.LENGTH_SHORT).show()
+                return@setPositiveButton
+            }
             if (folders.values.any { pkg in it }) {
                 Toast.makeText(this, "This app is already in a folder", Toast.LENGTH_SHORT).show()
                 return@setPositiveButton
             }
-            folders[name] = (folders[name] ?: mutableSetOf()).toMutableSet().apply { add(pkg) }
+            folders[name] = mutableSetOf(pkg)
             saveFolders(folders); render()
         }.setNegativeButton("Cancel", null).show()
     }
