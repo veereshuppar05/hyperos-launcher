@@ -343,13 +343,29 @@ class MainActivity : Activity() {
             chosen.forEach { appTile(it, width) }
         }
         if (chosen.isEmpty() && showingApps) {
-            val message = if (query.isEmpty()) "No apps available" else "No apps found for \"$query\""
-            grid.addView(TextView(this).apply {
-                text = message
+            val emptyState = LinearLayout(this).apply {
+                orientation = 1
                 gravity = Gravity.CENTER
-                textSize = 14f
-                setTextColor(0xffc5cad4.toInt())
-            }, GridLayout.LayoutParams().apply {
+                setPadding(dp(12), dp(16), dp(12), dp(16))
+            }
+            emptyState.addView(TextView(this).apply {
+                text = if (query.isEmpty()) "No apps available" else "No apps found"
+                gravity = Gravity.CENTER
+                textSize = 16f
+                setTextColor(Color.WHITE)
+            }, LinearLayout.LayoutParams(-1, -2))
+            if (query.isNotEmpty()) {
+                emptyState.addView(TextView(this).apply {
+                    text = "Try another name or tap to clear search"
+                    gravity = Gravity.CENTER
+                    textSize = 12f
+                    setTextColor(0xffaeb7c8.toInt()
+                    )
+                    setPadding(0, dp(8), 0, 0)
+                    setOnClickListener { search.text.clear(); search.requestFocus() }
+                }, LinearLayout.LayoutParams(-1, -2))
+            }
+            grid.addView(emptyState, GridLayout.LayoutParams().apply {
                 this.width = resources.displayMetrics.widthPixels - dp(32)
                 height = dp(150)
             })
