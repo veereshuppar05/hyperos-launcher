@@ -639,7 +639,7 @@ class MainActivity : Activity() {
     private fun appLabelSizePicker() {
         val options = arrayOf("Small", "Medium", "Large")
         val values = floatArrayOf(10f, 11f, 12f)
-        val current = values.indexOf(labelSize).coerceAtLeast(0)
+        val current = values.indexOfFirst { it == labelSize }.coerceAtLeast(0)
         AlertDialog.Builder(this).setTitle("App label size")
             .setSingleChoiceItems(options, current) { dialog, which ->
                 prefs.edit().putFloat("label_size_sp", values[which]).apply()
