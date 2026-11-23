@@ -85,6 +85,11 @@ class MainActivity : Activity() {
             setSingleLine(true); setPadding(dp(16), 0, dp(16), 0); background = bg(0xff272b36.toInt(), 24)
             setOnClickListener {
                 if (!showingApps) switchPage(true)
+                requestFocus()
+                post {
+                    val imm = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                    imm.showSoftInput(this, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+                }
             }
         }
         root.addView(search, LinearLayout.LayoutParams(-1, dp(48)).apply { topMargin = dp(12) })
