@@ -333,7 +333,19 @@ class MainActivity : Activity() {
                                      else -> 4
                                  }
                              }
-                             if (prefs.getBoolean("drawer_reverse_sort", false)) ranked.reversed() else ranked
+                             if (prefs.getBoolean("drawer_reverse_sort", false)) {
+                                 ranked.groupBy { info ->
+                                     val label = searchLabels[info.activityInfo.packageName] ?: info.loadLabel(packageManager).toString().lowercase()
+                                     val packageName = searchPackages[info.activityInfo.packageName] ?: info.activityInfo.packageName.lowercase()
+                                     when {
+                                         label == normalizedQuery -> 0
+                                         label.startsWith(normalizedQuery) -> 1
+                                         label.contains(normalizedQuery) -> 2
+                                         packageName.contains(normalizedQuery) -> 3
+                                         else -> 4
+                                     }
+                                 }.toSortedMap().values.flatMap { it.reversed() }
+                             } else ranked
                          } else matches
                      } else all.filter { it.activityInfo.packageName in home }
         if (!showingApps && query.isEmpty()) folders.forEach { (name, packages) -> folderTile(name, packages, all) }
