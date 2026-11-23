@@ -544,7 +544,7 @@ class MainActivity : Activity() {
                     prefs.edit().putStringSet("pinned", set).apply(); render()
                 }
                 "App info" -> startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$pkg")))
-                "Hide app", "Unhide app" -> { val set = hidden(); if (isHidden) set.remove(pkg) else set.add(pkg); prefs.edit().putStringSet("hidden_apps", set).apply(); render() }
+                "Hide app", "Unhide app" -> { val set = hidden(); if (isHidden) set.remove(pkg) else set.add(pkg); prefs.edit().putStringSet("hidden_apps", set).apply(); refreshAppCache() }
                 "Share app" -> {
                     val shareIntent = Intent(Intent.ACTION_SEND).apply {
                         type = "text/plain"
