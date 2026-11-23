@@ -20,11 +20,15 @@ import android.widget.EditText
 import android.widget.GridLayout
 import android.widget.LinearLayout
 import android.widget.ScrollView
+import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
 
 class MainActivity : Activity() {
     private lateinit var grid: GridLayout
+    private lateinit var appScroll: ScrollView
+    private lateinit var alphabetRail: TextView
+    private val sectionHeaders = mutableMapOf<Char, android.view.View>()
     private lateinit var search: EditText
     private var showingApps = false
     private var pageTransitioning = false
@@ -111,9 +115,31 @@ class MainActivity : Activity() {
             }
             false
         }
+        appScroll = scroll
         grid = GridLayout(this).apply { columnCount = columns }
         scroll.addView(grid)
-        root.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
+        val contentFrame = FrameLayout(this)
+        contentFrame.addView(scroll, FrameLayout.LayoutParams(-1, -1))
+        alphabetRail = TextView(this).apply {
+            text = "A\nB\nC\nD\nE\nF\nG\nH\nI\nJ\nK\nL\nM\nN\nO\nP\nQ\nR\nS\nT\nU\nV\nW\nX\nY\nZ\n#"
+            textSize = 9f
+            setTextColor(0xffb9c5df.toInt())
+            gravity = Gravity.CENTER
+            setPadding(dp(3), dp(2), dp(3), dp(2))
+            visibility = android.view.View.GONE
+            setOnTouchListener { _, event ->
+                if (event.action == MotionEvent.ACTION_DOWN || event.action == MotionEvent.ACTION_MOVE) {
+                    val letters = sectionHeaders.keys.sorted().toList()
+                    if (letters.isNotEmpty()) {
+                        val index = ((event.y / height.coerceAtLeast(1)) * letters.size).toInt().coerceIn(0, letters.lastIndex)
+                        sectionHeaders[letters[index]]?.let { appScroll.smoothScrollTo(0, it.top) }
+                    }
+                    true
+                } else event.action == MotionEvent.ACTION_UP
+            }
+        }
+        contentFrame.addView(alphabetRail, FrameLayout.LayoutParams(dp(26), -1, Gravity.END))
+        root.addView(contentFrame, LinearLayout.LayoutParams(-1, 0, 1f))
         val dockBar = LinearLayout(this).apply {
             gravity = Gravity.CENTER; orientation = 0; background = bg(0xff242833.toInt(), 24)
             setPadding(dp(6), dp(6), dp(6), dp(6))
@@ -166,6 +192,8 @@ class MainActivity : Activity() {
     private fun render() {
         if (!::grid.isInitialized) return
         grid.removeAllViews()
+        sectionHeaders.clear()
+        if (::alphabetRail.isInitialized) alphabetRail.visibility = if (showingApps && search.text.isEmpty()) android.view.View.VISIBLE else android.view.View.GONE
         val all = apps()
         val query = search.text.toString()
         val folderMembers = folderMap().values.flatten().toSet()
@@ -208,6 +236,7 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(8), 0, 0, 0)
         }
+        sectionHeaders[letter] = header
         grid.addView(header, GridLayout.LayoutParams().apply {
             width = resources.displayMetrics.widthPixels - dp(32)
             height = dp(30)
