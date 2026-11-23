@@ -232,10 +232,13 @@ class MainActivity : Activity() {
                         val railIndex = ((event.y / height.coerceAtLeast(1)) * alphabet.length)
                             .toInt().coerceIn(0, alphabet.lastIndex)
                         val target = alphabet[railIndex]
-                        val nearest = letters.minByOrNull { candidate ->
-                            if (target == '#') if (candidate == '#') 0 else 1000
-                            else if (candidate == '#') 1000 else kotlin.math.abs(candidate - target)
-                        } ?: target
+                        val nearest = if (target == '#') {
+                            if ('#' in letters) '#' else letters.lastOrNull() ?: target
+                        } else {
+                            letters.minByOrNull { candidate ->
+                                if (candidate == '#') 1000 else kotlin.math.abs(candidate - target)
+                            } ?: target
+                        }
                         sectionHeaders[nearest]?.let { appScroll.smoothScrollTo(0, it.top) }
                     }
                     true
