@@ -1305,8 +1305,8 @@ class MainActivity : Activity() {
     }
 
     private fun tapFeedbackPicker() {
-        val options = arrayOf("Off", "Scale", "Bounce", "Fade & scale")
-        val current = prefs.getInt("tap_feedback_style", 1).coerceIn(0, 3)
+        val options = arrayOf("Off", "Scale", "Bounce", "Fade & scale", "Pulse")
+        val current = prefs.getInt("tap_feedback_style", 1).coerceIn(0, 4)
         AlertDialog.Builder(this).setTitle("Tap feedback")
             .setSingleChoiceItems(options, current) { dialog, which ->
                 prefs.edit().putInt("tap_feedback_style", which).apply()
@@ -1641,6 +1641,9 @@ class MainActivity : Activity() {
             }
             3 -> view.animate().alpha(0.55f).scaleX(0.96f).scaleY(0.96f).setDuration(90).withEndAction {
                 view.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(140).withEndAction { action() }
+            }
+            4 -> view.animate().alpha(0.65f).setDuration(100).withEndAction {
+                view.animate().alpha(1f).setDuration(160).withEndAction { action() }
             }
         }
     }
