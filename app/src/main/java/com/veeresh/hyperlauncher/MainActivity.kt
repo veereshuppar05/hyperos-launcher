@@ -233,6 +233,7 @@ class MainActivity : Activity() {
 
     private var cachedApps: List<ResolveInfo>? = null
     private var cachedAppSearchLabels: Map<String, String>? = null
+    private var cachedAppSearchPackages: Map<String, String>? = null
     private var hasResumedOnce = false
 
     private fun apps(): List<ResolveInfo> {
@@ -247,6 +248,9 @@ class MainActivity : Activity() {
         cachedAppSearchLabels = loaded.associate { info ->
             info.activityInfo.packageName to info.loadLabel(packageManager).toString().lowercase()
         }
+        cachedAppSearchPackages = loaded.associate { info ->
+            info.activityInfo.packageName to info.activityInfo.packageName.lowercase()
+        }
         return loaded
     }
 
@@ -255,6 +259,7 @@ class MainActivity : Activity() {
         if (hasResumedOnce) {
             cachedApps = null
             cachedAppSearchLabels = null
+            cachedAppSearchPackages = null
             if (::grid.isInitialized) render()
         } else {
             hasResumedOnce = true
@@ -274,9 +279,10 @@ class MainActivity : Activity() {
         val home = pinned().filter { it !in folderMembers }
         val normalizedQuery = query.lowercase()
         val searchLabels = cachedAppSearchLabels.orEmpty()
+        val searchPackages = cachedAppSearchPackages.orEmpty()
         val chosen = if (showingApps || query.isNotEmpty()) all.filter { info ->
                          (searchLabels[info.activityInfo.packageName] ?: info.loadLabel(packageManager).toString().lowercase()).contains(normalizedQuery) ||
-                         info.activityInfo.packageName.lowercase().contains(normalizedQuery)
+                         (searchPackages[info.activityInfo.packageName] ?: info.activityInfo.packageName.lowercase()).contains(normalizedQuery)
                      }
                      else all.filter { it.activityInfo.packageName in home }
         if (!showingApps && query.isEmpty()) folders.forEach { (name, packages) -> folderTile(name, packages, all) }
