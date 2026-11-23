@@ -292,34 +292,47 @@ class MainActivity : Activity() {
         }
         var touchStartX = 0f
         var touchStartY = 0f
+        var gestureHandled = false
         scroll.setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     touchStartX = event.x
                     touchStartY = event.y
+                    gestureHandled = false
+                    false
                 }
-                MotionEvent.ACTION_UP -> {
+                MotionEvent.ACTION_MOVE -> {
                     val deltaX = event.x - touchStartX
                     val deltaY = event.y - touchStartY
-                    if (kotlin.math.abs(deltaX) > dp(90) &&
+                    if (!gestureHandled && kotlin.math.abs(deltaX) > dp(90) &&
                         kotlin.math.abs(deltaX) > kotlin.math.abs(deltaY) * 1.25f) {
                         if (deltaX < 0 && !showingApps) {
+                            gestureHandled = true
                             switchPage(true)
                         } else if (deltaX > 0 && showingApps) {
+                            gestureHandled = true
                             switchPage(false)
                         }
-                    } else if (prefs.getBoolean("vertical_swipe_gestures", true) &&
-                        kotlin.math.abs(deltaY) > dp(120) &&
+                    } else if (!gestureHandled && prefs.getBoolean("vertical_swipe_gestures", true) &&
+                        kotlin.math.abs(deltaY) > dp(100) &&
                         kotlin.math.abs(deltaY) > kotlin.math.abs(deltaX) * 1.3f) {
                         if (deltaY < 0 && !showingApps) {
+                            gestureHandled = true
                             switchPage(true)
                         } else if (deltaY > 0 && showingApps) {
+                            gestureHandled = true
                             switchPage(false)
                         }
                     }
+                    gestureHandled
                 }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    val handled = gestureHandled
+                    gestureHandled = false
+                    handled
+                }
+                else -> gestureHandled
             }
-            false
         }
         appScroll = scroll
         scroll.isLongClickable = true
