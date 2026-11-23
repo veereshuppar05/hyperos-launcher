@@ -232,6 +232,7 @@ class MainActivity : Activity() {
     }
 
     private var cachedApps: List<ResolveInfo>? = null
+    private var hasResumedOnce = false
 
     private fun apps(): List<ResolveInfo> = cachedApps ?: packageManager
         .queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), PackageManager.MATCH_ALL)
@@ -242,8 +243,12 @@ class MainActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
-        cachedApps = null
-        if (::grid.isInitialized) render()
+        if (hasResumedOnce) {
+            cachedApps = null
+            if (::grid.isInitialized) render()
+        } else {
+            hasResumedOnce = true
+        }
     }
 
     private fun render() {
