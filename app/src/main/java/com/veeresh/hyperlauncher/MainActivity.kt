@@ -1915,51 +1915,64 @@ class MainActivity : Activity() {
         }
         val appByPackage = apps().associateBy { it.activityInfo.packageName }
         list.take(5).forEach { pkg ->
-            val info = appByPackage[pkg]
-            if (info != null) bar.addView(TextView(this).apply {
+            val info = appByPackage[pkg] ?: return@forEach
+            val label = info.loadLabel(packageManager).toString()
+            val item = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
                 gravity = Gravity.CENTER
                 translationY = dp(intArrayOf(-6, 0, 6)[prefs.getInt("dock_vertical_offset", 1).coerceIn(0, 2)]).toFloat()
-                includeFontPadding = false
-                maxLines = 1
-                text = if (dockShowLabels) {
-                    val label = info.loadLabel(packageManager).toString()
-                    when (prefs.getString("dock_label_case", "original")) {
+                contentDescription = label
+                background = tileRipple()
+                setOnClickListener { animateTap(this) { launch(pkg) } }
+                setOnLongClickListener { appMenu(pkg, label); true }
+            }
+            item.addView(
+                launcherIcon(info, dockIconSizeDp, prefs.getInt("dock_icon_alpha", 255)),
+                LinearLayout.LayoutParams(dp(dockIconSizeDp), dp(dockIconSizeDp))
+            )
+            if (dockShowLabels) {
+                item.addView(TextView(this).apply {
+                    text = when (prefs.getString("dock_label_case", "original")) {
                         "upper" -> label.uppercase()
                         "lower" -> label.lowercase()
                         else -> label
                     }
-                } else ""
-                textSize = prefs.getFloat("dock_label_size_sp", 10f)
-                letterSpacing = prefs.getFloat("dock_label_letter_spacing", 0f).coerceIn(0f, 0.1f)
-                val labelColor = appLabelColor("dock_label_color")
-                setTextColor(Color.argb(prefs.getInt("dock_label_alpha", 255).coerceIn(0, 255), Color.red(labelColor), Color.green(labelColor), Color.blue(labelColor)))
-                background = when (prefs.getInt("dock_label_background", 0).coerceIn(0, 2)) {
-                    1 -> bg(Color.argb(51, 77, 86, 104), 6)
-                    2 -> bg(Color.rgb(34, 40, 51), 8)
-                    else -> null
-                }
-                val labelPadding = intArrayOf(1, 3, 5)[prefs.getInt("dock_label_padding", 1).coerceIn(0, 2)]
-                setPadding(dp(labelPadding), dp(1), dp(labelPadding), dp(1))
-                setTypeface(android.graphics.Typeface.create(when (prefs.getString("dock_label_font", "sans")) {
-                    "serif" -> "serif"
-                    "mono" -> "monospace"
-                    "condensed" -> "sans-serif-condensed"
-                    else -> "sans-serif"
-                }, if (prefs.getBoolean("dock_label_bold", false)) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL))
-                when (prefs.getInt("dock_label_shadow", 0).coerceIn(0, 2)) {
-                    1 -> setShadowLayer(dp(1).toFloat(), 0f, dp(1).toFloat(), 0x99000000.toInt())
-                    2 -> setShadowLayer(dp(2).toFloat(), 0f, dp(1).toFloat(), 0xff000000.toInt())
-                    else -> setShadowLayer(0f, 0f, 0f, Color.TRANSPARENT)
-                }
-                contentDescription = info.loadLabel(packageManager).toString()
-                val drawable = info.loadIcon(packageManager); drawable.alpha = prefs.getInt("dock_icon_alpha", 255).coerceIn(0, 255); drawable.setBounds(0, 0, dp(dockIconSizeDp), dp(dockIconSizeDp))
-                setCompoundDrawables(null, drawable, null, null)
-                setOnClickListener { animateTap(this) { launch(pkg) } }
-                setOnLongClickListener { appMenu(pkg, info.loadLabel(packageManager).toString()); true }
-            }, LinearLayout.LayoutParams(0, dp(if (dockShowLabels) dockIconSizeDp + 20 else 44), 1f).apply {
-                // Equal-width slots keep the five-icon dock balanced on different screen sizes.
-                val gap = intArrayOf(2, 6, 10)[prefs.getInt("dock_icon_spacing", 1).coerceIn(0, 2)]
-                leftMargin = dp(gap); rightMargin = dp(gap)
+                    textSize = prefs.getFloat("dock_label_size_sp", 10f)
+                    letterSpacing = prefs.getFloat("dock_label_letter_spacing", 0f).coerceIn(0f, 0.1f)
+                    val labelColor = appLabelColor("dock_label_color")
+                    setTextColor(Color.argb(
+                        prefs.getInt("dock_label_alpha", 255).coerceIn(0, 255),
+                        Color.red(labelColor), Color.green(labelColor), Color.blue(labelColor)
+                    ))
+                    gravity = Gravity.CENTER
+                    maxLines = 1
+                    ellipsize = android.text.TextUtils.TruncateAt.END
+                    background = when (prefs.getInt("dock_label_background", 0).coerceIn(0, 2)) {
+                        1 -> bg(Color.argb(51, 77, 86, 104), 6)
+                        2 -> bg(Color.rgb(34, 40, 51), 8)
+                        else -> null
+                    }
+                    val labelPadding = intArrayOf(1, 3, 5)[prefs.getInt("dock_label_padding", 1).coerceIn(0, 2)]
+                    setPadding(dp(labelPadding), dp(1), dp(labelPadding), dp(1))
+                    setTypeface(android.graphics.Typeface.create(when (prefs.getString("dock_label_font", "sans")) {
+                        "serif" -> "serif"
+                        "mono" -> "monospace"
+                        "condensed" -> "sans-serif-condensed"
+                        else -> "sans-serif"
+                    }, if (prefs.getBoolean("dock_label_bold", false)) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL))
+                    when (prefs.getInt("dock_label_shadow", 0).coerceIn(0, 2)) {
+                        1 -> setShadowLayer(dp(1).toFloat(), 0f, dp(1).toFloat(), 0x99000000.toInt())
+                        2 -> setShadowLayer(dp(2).toFloat(), 0f, dp(1).toFloat(), 0xff000000.toInt())
+                        else -> setShadowLayer(0f, 0f, 0f, Color.TRANSPARENT)
+                    }
+                }, LinearLayout.LayoutParams(-1, dp(20)).apply {
+                    topMargin = dp(prefs.getInt("dock_icon_label_gap_dp", 4).coerceIn(0, 8))
+                })
+            }
+            val gap = intArrayOf(2, 6, 10)[prefs.getInt("dock_icon_spacing", 1).coerceIn(0, 2)]
+            bar.addView(item, LinearLayout.LayoutParams(0, -1, 1f).apply {
+                leftMargin = dp(gap)
+                rightMargin = dp(gap)
             })
         }
     }
