@@ -16,6 +16,7 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.Gravity
 import android.view.MotionEvent
+import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.GridLayout
 import android.widget.LinearLayout
@@ -104,7 +105,15 @@ class MainActivity : Activity() {
         search = EditText(this).apply {
             hint = if (showingApps) "Search all apps" else "Search apps"
             setHintTextColor(0xff9ba3b2.toInt()); setTextColor(Color.WHITE)
-            setSingleLine(true); setPadding(dp(16), 0, dp(16), 0); background = bg(0xff272b36.toInt(), 24)
+            setSingleLine(true); imeOptions = EditorInfo.IME_ACTION_SEARCH
+            setPadding(dp(16), 0, dp(16), 0); background = bg(0xff272b36.toInt(), 24)
+            setOnEditorActionListener { _, actionId, _ ->
+                if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                    val imm = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                    imm.hideSoftInput(this, 0)
+                    true
+                } else false
+            }
             setOnClickListener {
                 if (!showingApps) switchPage(true)
                 requestFocus()
