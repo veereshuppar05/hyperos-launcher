@@ -306,6 +306,18 @@ class MainActivity : Activity() {
         } else {
             chosen.forEach { appTile(it, width) }
         }
+        if (chosen.isEmpty() && showingApps) {
+            val message = if (query.isEmpty()) "No apps available" else "No apps found for \"$query\""
+            grid.addView(TextView(this).apply {
+                text = message
+                gravity = Gravity.CENTER
+                textSize = 14f
+                setTextColor(0xffc5cad4.toInt())
+            }, GridLayout.LayoutParams().apply {
+                this.width = resources.displayMetrics.widthPixels - dp(32)
+                height = dp(150)
+            })
+        }
         if (chosen.isEmpty() && !showingApps && query.isEmpty() && folders.isEmpty()) {
             grid.addView(TextView(this).apply {
                 text = "Home screen is empty. Open Apps and long-press an app to pin it."
