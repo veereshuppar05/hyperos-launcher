@@ -6,10 +6,12 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
 import android.graphics.Color
+import android.content.res.ColorStateList
 import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.RippleDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
@@ -19,6 +21,7 @@ import android.view.MotionEvent
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.GridLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.SeekBar
@@ -78,6 +81,30 @@ class MainActivity : Activity() {
     }
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
     private fun bg(c: Int, r: Int) = GradientDrawable().apply { setColor(c); cornerRadius = dp(r).toFloat() }
+    private fun tileRipple(): Drawable = RippleDrawable(
+        ColorStateList.valueOf(0x44ffffff),
+        null,
+        bg(Color.WHITE, 20)
+    )
+
+    private fun launcherIcon(
+        info: ResolveInfo,
+        sizeDp: Int,
+        alpha: Int,
+        iconBackground: Drawable? = null
+    ): ImageView {
+        return ImageView(this).apply {
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            background = iconBackground ?: bg(Color.TRANSPARENT, 18)
+            clipToOutline = true
+            contentDescription = info.loadLabel(packageManager).toString()
+            val drawable = info.loadIcon(packageManager).mutate()
+            drawable.alpha = alpha.coerceIn(0, 255)
+            setImageDrawable(drawable)
+            importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        }
+    }
+
     private fun pinned(): MutableSet<String> = prefs.getStringSet("pinned", emptySet())?.toMutableSet() ?: mutableSetOf()
     private fun hidden(): MutableSet<String> = prefs.getStringSet("hidden_apps", emptySet())?.toMutableSet() ?: mutableSetOf()
     private fun folderMap(): MutableMap<String, MutableSet<String>> {
@@ -572,6 +599,7 @@ class MainActivity : Activity() {
         val tile = LinearLayout(this).apply {
             contentDescription = "$label app"
             orientation = 1; gravity = Gravity.CENTER
+            background = tileRipple()
             setPadding(dp(3), dp(if (drawerMode) 4 else homeSpacing), dp(3), dp(if (drawerMode) 4 else homeSpacing))
             setOnClickListener {
                 if (prefs.getBoolean("tap_vibration", false)) {
@@ -583,14 +611,12 @@ class MainActivity : Activity() {
         }
         val drawer = showingApps
         val displayIconSize = if (drawer) drawerIconSizeDp else iconSizeDp
-        val icon = TextView(this).apply {
-            gravity = Gravity.CENTER
-            background = if (drawer) null else homeIconBackground()
-            val drawable = info.loadIcon(packageManager)
-            drawable.alpha = prefs.getInt(if (drawerMode) "drawer_icon_alpha" else "home_icon_alpha", 255).coerceIn(0, 255)
-            drawable.setBounds(0, 0, dp(displayIconSize - 10), dp(displayIconSize - 10))
-            setCompoundDrawables(null, drawable, null, null)
-        }
+        val icon = launcherIcon(
+            info,
+            displayIconSize,
+            prefs.getInt(if (drawerMode) "drawer_icon_alpha" else "home_icon_alpha", 255),
+            if (drawer) null else homeIconBackground()
+        )
         tile.addView(icon, LinearLayout.LayoutParams(dp(displayIconSize), dp(displayIconSize)))
         val itemHasLabels = if (drawerMode) showDrawerLabels else showHomeLabels
         if (itemHasLabels) tile.addView(TextView(this).apply {
@@ -606,7 +632,8 @@ class MainActivity : Activity() {
     private fun folderTile(name: String, pkgs: Set<String>, all: List<ResolveInfo>) {
         val width = (resources.displayMetrics.widthPixels - dp(32)) / columns
         val tile = LinearLayout(this).apply {
-            orientation = 1; gravity = Gravity.CENTER; setPadding(dp(2), dp(8), dp(2), dp(8))
+            orientation = 1; gravity = Gravity.CENTER; background = tileRipple()
+            setPadding(dp(2), dp(8), dp(2), dp(8))
             setOnClickListener { animateTap(this) { openFolder(name, pkgs, all) } }; setOnLongClickListener { folderMenu(name); true }
         }
         val previewColumns = prefs.getInt("folder_preview_grid", 2).coerceIn(2, 4)
