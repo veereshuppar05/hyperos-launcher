@@ -324,7 +324,7 @@ class MainActivity : Activity() {
     private fun appMenu(pkg: String, label: String) {
         val isPinned = pkg in pinned()
         val isHidden = pkg in hidden()
-        val options = mutableListOf("Open", if (isPinned) "Unpin from Home" else "Pin to Home", "App info", "Uninstall", if (isHidden) "Unhide app" else "Hide app")
+        val options = mutableListOf("Open", if (isPinned) "Unpin from Home" else "Pin to Home", "App info", "Uninstall", if (isHidden) "Unhide app" else "Hide app", "Share app")
         if (isPinned) options.add("Create folder")
         options.add(if (pkg in dock()) "Remove from Dock" else "Add to Dock")
         AlertDialog.Builder(this).setTitle(label).setItems(options.toTypedArray()) { _, index ->
@@ -336,6 +336,13 @@ class MainActivity : Activity() {
                 }
                 "App info" -> startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$pkg")))
                 "Hide app", "Unhide app" -> { val set = hidden(); if (isHidden) set.remove(pkg) else set.add(pkg); prefs.edit().putStringSet("hidden_apps", set).apply(); render() }
+                "Share app" -> {
+                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, "$label\\nhttps://play.google.com/store/apps/details?id=$pkg")
+                    }
+                    startActivity(Intent.createChooser(shareIntent, "Share $label"))
+                }
                 "Uninstall" -> startActivity(Intent(Intent.ACTION_DELETE, Uri.parse("package:$pkg")))
                 "Create folder" -> createFolder(pkg)
                 "Add to Dock" -> {
