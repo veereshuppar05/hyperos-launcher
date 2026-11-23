@@ -489,6 +489,7 @@ class MainActivity : Activity() {
                     val drawable = info.loadIcon(packageManager)
                     drawable.setBounds(0, 0, dp(iconSize), dp(iconSize))
                     setCompoundDrawables(null, drawable, null, null)
+                compoundDrawablePadding = dp(prefs.getInt("dock_icon_label_gap_dp", 4).coerceIn(0, 8))
                 }
                 tile.addView(iconView, LinearLayout.LayoutParams(dp(cellWidthDp), dp(iconSize + 12)))
                 if (showFolderAppLabels) tile.addView(TextView(this).apply {
@@ -768,7 +769,7 @@ class MainActivity : Activity() {
         val homeLabelOption = if (showHomeLabels) "Hide home labels" else "Show home labels"
         val drawerLabelOption = if (showDrawerLabels) "Hide app drawer labels" else "Show app drawer labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape", "Folder preview layout", if (showFolderLabels) "Hide folder labels" else "Show folder labels", "Folder label size", "Folder app grid", "Opened folder background", "Opened folder shape", if (showFolderAppLabels) "Hide folder app labels" else "Show folder app labels", "Folder app sorting", "Opened folder icon size", "Opened folder app label size", "Wallpaper dimming", "Home icon background opacity", "Home label colour", "App drawer label colour", "Dock background shape", "Dock background opacity", "Dock label size", "Dock label colour", "Dock side padding", "Dock icon spacing", if (prefs.getBoolean("dock_label_bold", false)) "Dock label: Bold" else "Dock label: Regular", "Dock label background", "Dock icon opacity", "Dock vertical position", "Dock height", "Dock alignment", "Dock label shadow")) { _, index ->
+            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape", "Folder preview layout", if (showFolderLabels) "Hide folder labels" else "Show folder labels", "Folder label size", "Folder app grid", "Opened folder background", "Opened folder shape", if (showFolderAppLabels) "Hide folder app labels" else "Show folder app labels", "Folder app sorting", "Opened folder icon size", "Opened folder app label size", "Wallpaper dimming", "Home icon background opacity", "Home label colour", "App drawer label colour", "Dock background shape", "Dock background opacity", "Dock label size", "Dock label colour", "Dock side padding", "Dock icon spacing", if (prefs.getBoolean("dock_label_bold", false)) "Dock label: Bold" else "Dock label: Regular", "Dock label background", "Dock icon opacity", "Dock vertical position", "Dock height", "Dock alignment", "Dock label shadow", "Dock icon-label spacing")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> drawerGridPicker()
@@ -822,6 +823,7 @@ class MainActivity : Activity() {
                     46 -> dockHeightPicker()
                     47 -> dockAlignmentPicker()
                     48 -> dockLabelShadowPicker()
+                    49 -> dockIconLabelGapPicker()
                 }
             }.show()
     }
@@ -1198,6 +1200,18 @@ class MainActivity : Activity() {
                 prefs.edit().putInt("home_tile_spacing", values[which]).apply()
                 dialog.dismiss()
                 render()
+            }.setNegativeButton("Cancel", null).show()
+    }
+
+    private fun dockIconLabelGapPicker() {
+        val options = arrayOf("Tight", "Standard", "Wide")
+        val values = intArrayOf(0, 4, 8)
+        val current = values.indexOf(prefs.getInt("dock_icon_label_gap_dp", 4)).coerceAtLeast(0)
+        AlertDialog.Builder(this).setTitle("Dock icon-label spacing")
+            .setSingleChoiceItems(options, current) { dialog, which ->
+                prefs.edit().putInt("dock_icon_label_gap_dp", values[which]).apply()
+                dialog.dismiss()
+                refreshDock()
             }.setNegativeButton("Cancel", null).show()
     }
 
