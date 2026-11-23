@@ -60,9 +60,13 @@ class MainActivity : Activity() {
     private fun hidden(): MutableSet<String> = prefs.getStringSet("hidden_apps", emptySet())?.toMutableSet() ?: mutableSetOf()
     private fun folderMap(): MutableMap<String, MutableSet<String>> {
         val result = mutableMapOf<String, MutableSet<String>>()
-        (prefs.getString("folders", "") ?: "").split("\n").filter { it.contains("|") }.forEach { line ->
-            val parts = line.split("|", limit = 2)
-            if (parts.size == 2) result[parts[0]] = parts[1].split(",").filter { it.isNotBlank() }.toMutableSet()
+        (prefs.getString("folders", "") ?: "").split("\n").forEach { line ->
+            val separator = line.indexOf('|')
+            if (separator >= 0) {
+                val name = line.substring(0, separator)
+                val packages = line.substring(separator + 1).split(",").filter { it.isNotBlank() }.toMutableSet()
+                result[name] = packages
+            }
         }
         return result
     }
