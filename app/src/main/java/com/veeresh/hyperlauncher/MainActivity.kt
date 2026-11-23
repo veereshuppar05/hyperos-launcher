@@ -1492,7 +1492,14 @@ class MainActivity : Activity() {
                 translationY = dp(intArrayOf(-6, 0, 6)[prefs.getInt("dock_vertical_offset", 1).coerceIn(0, 2)]).toFloat()
                 includeFontPadding = false
                 maxLines = 1
-                text = if (dockShowLabels) {\n                    val label = info.loadLabel(packageManager).toString()\n                    when (prefs.getString("dock_label_case", "original")) {\n                        "upper" -> label.uppercase()\n                        "lower" -> label.lowercase()\n                        else -> label\n                    }\n                } else ""
+                text = if (dockShowLabels) {
+                    val label = info.loadLabel(packageManager).toString()
+                    when (prefs.getString("dock_label_case", "original")) {
+                        "upper" -> label.uppercase()
+                        "lower" -> label.lowercase()
+                        else -> label
+                    }
+                } else ""
                 textSize = prefs.getFloat("dock_label_size_sp", 10f)
                 letterSpacing = prefs.getFloat("dock_label_letter_spacing", 0f).coerceIn(0f, 0.1f)
                 val labelColor = appLabelColor("dock_label_color")
