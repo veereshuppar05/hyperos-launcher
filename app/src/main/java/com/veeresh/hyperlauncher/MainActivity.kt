@@ -1219,7 +1219,8 @@ class MainActivity : Activity() {
     private fun dockLabelLetterSpacingPicker() {
         val options = arrayOf("Normal", "Medium", "Wide")
         val values = floatArrayOf(0f, 0.05f, 0.1f)
-        val current = values.indexOf(prefs.getFloat("dock_label_letter_spacing", 0f)).coerceAtLeast(0)
+        val saved = prefs.getFloat("dock_label_letter_spacing", 0f).coerceIn(0f, 0.1f)
+        val current = if (saved < 0.025f) 0 else if (saved < 0.075f) 1 else 2
         AlertDialog.Builder(this).setTitle("Dock label letter spacing")
             .setSingleChoiceItems(options, current) { dialog, which ->
                 prefs.edit().putFloat("dock_label_letter_spacing", values[which]).apply()
