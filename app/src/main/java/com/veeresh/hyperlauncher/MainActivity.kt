@@ -44,6 +44,8 @@ class MainActivity : Activity() {
     private val dockShowLabels: Boolean get() = prefs.getBoolean("dock_show_labels", false)
     private val dockBarHeightDp: Int get() = if (dockShowLabels) dockIconSizeDp + 32 else 60
     private val labelSize: Float get() = prefs.getFloat("label_size_sp", 11f)
+    private val homeLabelSize: Float get() = prefs.getFloat("home_label_size_sp", labelSize - 0.5f)
+    private val drawerLabelSize: Float get() = prefs.getFloat("drawer_label_size_sp", labelSize + 0.5f)
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
     private fun bg(c: Int, r: Int) = GradientDrawable().apply { setColor(c); cornerRadius = dp(r).toFloat() }
@@ -304,7 +306,7 @@ class MainActivity : Activity() {
         tile.addView(icon, LinearLayout.LayoutParams(dp(displayIconSize), dp(displayIconSize)))
         val itemHasLabels = if (drawerMode) showDrawerLabels else showHomeLabels
         if (itemHasLabels) tile.addView(TextView(this).apply {
-            text = label; textSize = if (drawerMode) labelSize + 0.5f else labelSize - 0.5f
+            text = label; textSize = if (drawerMode) drawerLabelSize else homeLabelSize
             gravity = Gravity.CENTER; setTextColor(Color.WHITE); maxLines = 2
         }, LinearLayout.LayoutParams(-1, dp(36)))
         grid.addView(tile, GridLayout.LayoutParams().apply {
@@ -425,7 +427,7 @@ class MainActivity : Activity() {
             }
             tile.addView(iconView, LinearLayout.LayoutParams(dp(64), dp(64)))
             if (showHomeLabels) tile.addView(TextView(this).apply {
-                text = label; textSize = 10.5f; gravity = Gravity.CENTER; setTextColor(Color.WHITE); maxLines = 2
+                text = label; textSize = homeLabelSize; gravity = Gravity.CENTER; setTextColor(Color.WHITE); maxLines = 2
             }, LinearLayout.LayoutParams(-1, dp(34)))
             box.addView(tile, GridLayout.LayoutParams().apply { width = dp(92); height = dp(if (showHomeLabels) 108 else 78) })
         }
@@ -559,11 +561,11 @@ class MainActivity : Activity() {
 
     private fun homeQuickCustomize() {
         AlertDialog.Builder(this).setTitle("Home customization")
-            .setItems(arrayOf("Home grid", "Home icon size", "App label size", "Change wallpaper", "More launcher settings")) { _, index ->
+             .setItems(arrayOf("Home grid", "Home icon size", "Home label size", "Change wallpaper", "More launcher settings")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> iconSizePicker()
-                    2 -> appLabelSizePicker()
+                    2 -> homeLabelSizePicker()
                     3 -> chooseWallpaper()
                     4 -> settings()
                 }
@@ -574,7 +576,7 @@ class MainActivity : Activity() {
         val homeLabelOption = if (showHomeLabels) "Hide home labels" else "Show home labels"
         val drawerLabelOption = if (showDrawerLabels) "Hide app drawer labels" else "Show app drawer labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "App label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels")) { _, index ->
+            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> drawerGridPicker()
@@ -582,20 +584,21 @@ class MainActivity : Activity() {
                     3 -> dockPicker()
                     4 -> iconSizePicker()
                     5 -> drawerIconSizePicker()
-                    6 -> appLabelSizePicker()
-                    7 -> homeSpacingPicker()
-                    8 -> chooseWallpaper()
-                    9 -> { prefs.edit().remove("wallpaper_uri").apply(); recreate() }
-                    10 -> { prefs.edit().putBoolean("home_show_labels", !showHomeLabels).apply(); render() }
-                    11 -> { prefs.edit().putBoolean("drawer_show_labels", !showDrawerLabels).apply(); render() }
-                    12 -> AlertDialog.Builder(this).setTitle("Clear home pins?")
+                    6 -> homeLabelSizePicker()
+                    7 -> drawerLabelSizePicker()
+                    8 -> homeSpacingPicker()
+                    9 -> chooseWallpaper()
+                    10 -> { prefs.edit().remove("wallpaper_uri").apply(); recreate() }
+                    11 -> { prefs.edit().putBoolean("home_show_labels", !showHomeLabels).apply(); render() }
+                    12 -> { prefs.edit().putBoolean("drawer_show_labels", !showDrawerLabels).apply(); render() }
+                    13 -> AlertDialog.Builder(this).setTitle("Clear home pins?")
                         .setMessage("Remove all pinned apps from the Home tab?")
                         .setPositiveButton("Clear") { _, _ -> prefs.edit().putStringSet("pinned", emptySet()).apply(); render() }
                         .setNegativeButton("Cancel", null).show()
-                    13 -> manageHiddenApps()
-                    14 -> dockIconSizePicker()
-                    15 -> dockBackgroundPicker()
-                    16 -> { prefs.edit().putBoolean("dock_show_labels", !dockShowLabels).apply(); refreshDock() }
+                    14 -> manageHiddenApps()
+                    15 -> dockIconSizePicker()
+                    16 -> dockBackgroundPicker()
+                    17 -> { prefs.edit().putBoolean("dock_show_labels", !dockShowLabels).apply(); refreshDock() }
                 }
             }.show()
     }
@@ -669,13 +672,25 @@ class MainActivity : Activity() {
             }.setNegativeButton("Cancel", null).show()
     }
 
-    private fun appLabelSizePicker() {
-        val options = arrayOf("Small", "Medium", "Large")
-        val values = floatArrayOf(10f, 11f, 12f)
-        val current = values.indexOfFirst { it == labelSize }.coerceAtLeast(0)
-        AlertDialog.Builder(this).setTitle("App label size")
+    private fun homeLabelSizePicker() {
+        val options = arrayOf("Small (9.5 sp)", "Medium (10.5 sp)", "Large (11.5 sp)")
+        val values = floatArrayOf(9.5f, 10.5f, 11.5f)
+        val current = values.indexOfFirst { it == homeLabelSize }.coerceAtLeast(0)
+        AlertDialog.Builder(this).setTitle("Home label size")
             .setSingleChoiceItems(options, current) { dialog, which ->
-                prefs.edit().putFloat("label_size_sp", values[which]).apply()
+                prefs.edit().putFloat("home_label_size_sp", values[which]).apply()
+                dialog.dismiss()
+                render()
+            }.setNegativeButton("Cancel", null).show()
+    }
+
+    private fun drawerLabelSizePicker() {
+        val options = arrayOf("Small (10.5 sp)", "Medium (11.5 sp)", "Large (12.5 sp)")
+        val values = floatArrayOf(10.5f, 11.5f, 12.5f)
+        val current = values.indexOfFirst { it == drawerLabelSize }.coerceAtLeast(0)
+        AlertDialog.Builder(this).setTitle("App drawer label size")
+            .setSingleChoiceItems(options, current) { dialog, which ->
+                prefs.edit().putFloat("drawer_label_size_sp", values[which]).apply()
                 dialog.dismiss()
                 render()
             }.setNegativeButton("Cancel", null).show()
