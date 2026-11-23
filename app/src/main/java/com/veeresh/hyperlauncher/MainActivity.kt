@@ -312,6 +312,7 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER
             background = if (drawer) null else homeIconBackground()
             val drawable = info.loadIcon(packageManager)
+            drawable.alpha = prefs.getInt(if (drawerMode) "drawer_icon_alpha" else "home_icon_alpha", 255).coerceIn(0, 255)
             drawable.setBounds(0, 0, dp(displayIconSize - 10), dp(displayIconSize - 10))
             setCompoundDrawables(null, drawable, null, null)
         }
@@ -777,7 +778,7 @@ class MainActivity : Activity() {
         val homeLabelOption = if (showHomeLabels) "Hide home labels" else "Show home labels"
         val drawerLabelOption = if (showDrawerLabels) "Hide app drawer labels" else "Show app drawer labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape", "Folder preview layout", if (showFolderLabels) "Hide folder labels" else "Show folder labels", "Folder label size", "Folder app grid", "Opened folder background", "Opened folder shape", if (showFolderAppLabels) "Hide folder app labels" else "Show folder app labels", "Folder app sorting", "Opened folder icon size", "Opened folder app label size", "Wallpaper dimming", "Home icon background opacity", "Home label colour", "App drawer label colour", "Dock background shape", "Dock background opacity", "Dock label size", "Dock label colour", "Dock side padding", "Dock icon spacing", if (prefs.getBoolean("dock_label_bold", false)) "Dock label: Bold" else "Dock label: Regular", "Dock label background", "Dock icon opacity", "Dock vertical position", "Dock height", "Dock alignment", "Dock label shadow", "Dock icon-label spacing", "Dock label letter spacing", "Dock label opacity", "Dock label font style", "Dock label capitalization", "Dock label padding", "Tap feedback", "Vertical swipe gestures")) { _, index ->
+            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape", "Folder preview layout", if (showFolderLabels) "Hide folder labels" else "Show folder labels", "Folder label size", "Folder app grid", "Opened folder background", "Opened folder shape", if (showFolderAppLabels) "Hide folder app labels" else "Show folder app labels", "Folder app sorting", "Opened folder icon size", "Opened folder app label size", "Wallpaper dimming", "Home icon background opacity", "Home label colour", "App drawer label colour", "Dock background shape", "Dock background opacity", "Dock label size", "Dock label colour", "Dock side padding", "Dock icon spacing", if (prefs.getBoolean("dock_label_bold", false)) "Dock label: Bold" else "Dock label: Regular", "Dock label background", "Dock icon opacity", "Dock vertical position", "Dock height", "Dock alignment", "Dock label shadow", "Dock icon-label spacing", "Dock label letter spacing", "Dock label opacity", "Dock label font style", "Dock label capitalization", "Dock label padding", "Tap feedback", "Vertical swipe gestures", "Home icon opacity", "App drawer icon opacity")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> drawerGridPicker()
@@ -839,6 +840,8 @@ class MainActivity : Activity() {
                     54 -> dockLabelPaddingPicker()
                     55 -> tapFeedbackPicker()
                     56 -> verticalSwipeToggle()
+                    57 -> homeIconOpacityPicker()
+                    58 -> drawerIconOpacityPicker()
                 }
             }.show()
     }
@@ -1242,6 +1245,30 @@ class MainActivity : Activity() {
             }.setNegativeButton("Cancel", null).show()
     }
 
+
+    private fun homeIconOpacityPicker() {
+        val options = arrayOf("100% — Full", "75% — Slightly faded", "50% — Faded")
+        val values = intArrayOf(255, 191, 128)
+        val current = values.indexOf(prefs.getInt("home_icon_alpha", 255)).coerceAtLeast(0)
+        AlertDialog.Builder(this).setTitle("Home icon opacity")
+            .setSingleChoiceItems(options, current) { dialog, which ->
+                prefs.edit().putInt("home_icon_alpha", values[which]).apply()
+                dialog.dismiss()
+                render()
+            }.setNegativeButton("Cancel", null).show()
+    }
+
+    private fun drawerIconOpacityPicker() {
+        val options = arrayOf("100% — Full", "75% — Slightly faded", "50% — Faded")
+        val values = intArrayOf(255, 191, 128)
+        val current = values.indexOf(prefs.getInt("drawer_icon_alpha", 255)).coerceAtLeast(0)
+        AlertDialog.Builder(this).setTitle("App drawer icon opacity")
+            .setSingleChoiceItems(options, current) { dialog, which ->
+                prefs.edit().putInt("drawer_icon_alpha", values[which]).apply()
+                dialog.dismiss()
+                render()
+            }.setNegativeButton("Cancel", null).show()
+    }
 
     private fun verticalSwipeToggle() {
         val enabled = prefs.getBoolean("vertical_swipe_gestures", true)
