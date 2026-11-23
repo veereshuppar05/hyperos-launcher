@@ -315,11 +315,13 @@ class MainActivity : Activity() {
         val normalizedQuery = query.lowercase()
         val searchLabels = cachedAppSearchLabels.orEmpty()
         val searchPackages = cachedAppSearchPackages.orEmpty()
-        val chosen = if (showingApps || query.isNotEmpty()) all.filter { info ->
-                         (searchLabels[info.activityInfo.packageName] ?: info.loadLabel(packageManager).toString().lowercase()).contains(normalizedQuery) ||
-                         (searchPackages[info.activityInfo.packageName] ?: info.activityInfo.packageName.lowercase()).contains(normalizedQuery)
-                     }
-                     else all.filter { it.activityInfo.packageName in home }
+        val chosen = if (showingApps || query.isNotEmpty()) {
+                         val matches = all.filter { info ->
+                             (searchLabels[info.activityInfo.packageName] ?: info.loadLabel(packageManager).toString().lowercase()).contains(normalizedQuery) ||
+                             (searchPackages[info.activityInfo.packageName] ?: info.activityInfo.packageName.lowercase()).contains(normalizedQuery)
+                         }
+                         if (query.isNotEmpty() && prefs.getBoolean("drawer_reverse_sort", false)) matches.reversed() else matches
+                     } else all.filter { it.activityInfo.packageName in home }
         if (!showingApps && query.isEmpty()) folders.forEach { (name, packages) -> folderTile(name, packages, all) }
         val activeColumns = if (showingApps) drawerColumns else columns
         val width = (resources.displayMetrics.widthPixels - dp(32)) / activeColumns
