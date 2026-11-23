@@ -83,6 +83,9 @@ class MainActivity : Activity() {
             hint = if (showingApps) "Search all apps" else "Search apps"
             setHintTextColor(0xff9ba3b2.toInt()); setTextColor(Color.WHITE)
             setSingleLine(true); setPadding(dp(16), 0, dp(16), 0); background = bg(0xff272b36.toInt(), 24)
+            setOnClickListener {
+                if (!showingApps) switchPage(true)
+            }
         }
         root.addView(search, LinearLayout.LayoutParams(-1, dp(48)).apply { topMargin = dp(12) })
 
