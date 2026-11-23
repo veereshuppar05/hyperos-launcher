@@ -1280,8 +1280,8 @@ class MainActivity : Activity() {
     }
 
     private fun dockIconSizePicker() {
-        val options = arrayOf("Small (28 dp)", "Medium (34 dp)", "Large (40 dp)")
-        val values = intArrayOf(28, 34, 40)
+        val options = arrayOf("Extra small (24 dp)", "Small (28 dp)", "Compact (32 dp)", "Medium (34 dp)", "Medium-large (36 dp)", "Large (40 dp)", "Extra large (44 dp)")
+        val values = intArrayOf(24, 28, 32, 34, 36, 40, 44)
         val current = values.indexOf(dockIconSizeDp).coerceAtLeast(0)
         AlertDialog.Builder(this).setTitle("Dock icon size")
             .setSingleChoiceItems(options, current) { dialog, which ->
