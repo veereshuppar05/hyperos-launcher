@@ -328,9 +328,10 @@ class MainActivity : Activity() {
                                  when {
                                      label == normalizedQuery -> 0
                                      label.startsWith(normalizedQuery) -> 1
-                                     label.contains(normalizedQuery) -> 2
-                                     packageName.contains(normalizedQuery) -> 3
-                                     else -> 4
+                                     label.split(Regex("\\s+")).any { it.startsWith(normalizedQuery) } -> 2
+                                     label.contains(normalizedQuery) -> 3
+                                     packageName.contains(normalizedQuery) -> 4
+                                     else -> 5
                                  }
                              }
                              if (prefs.getBoolean("drawer_reverse_sort", false)) {
