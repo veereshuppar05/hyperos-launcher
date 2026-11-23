@@ -231,11 +231,20 @@ class MainActivity : Activity() {
         background = bg(0xff303642.toInt(), 20); setOnClickListener { action() }
     }
 
-    private fun apps(): List<ResolveInfo> = packageManager
+    private var cachedApps: List<ResolveInfo>? = null
+
+    private fun apps(): List<ResolveInfo> = cachedApps ?: packageManager
         .queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), PackageManager.MATCH_ALL)
         .filter { it.activityInfo.packageName != packageName && it.activityInfo.packageName !in hidden() }
         .distinctBy { it.activityInfo.packageName }
-        .sortedBy { it.loadLabel(packageManager).toString().lowercase() }
+        .sortedBy { it.loadLabel(packageManager).toString().lowercase()
+        }.also { cachedApps = it }
+
+    override fun onResume() {
+        super.onResume()
+        cachedApps = null
+        if (::grid.isInitialized) render()
+    }
 
     private fun render() {
         if (!::grid.isInitialized) return
