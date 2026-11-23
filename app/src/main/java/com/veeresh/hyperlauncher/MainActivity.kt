@@ -298,7 +298,7 @@ class MainActivity : Activity() {
         val displayIconSize = if (drawer) drawerIconSizeDp else iconSizeDp
         val icon = TextView(this).apply {
             gravity = Gravity.CENTER
-            background = if (drawer) null else bg(0xff2f3544.toInt(), 18)
+            background = if (drawer) null else homeIconBackground()
             val drawable = info.loadIcon(packageManager)
             drawable.setBounds(0, 0, dp(displayIconSize - 10), dp(displayIconSize - 10))
             setCompoundDrawables(null, drawable, null, null)
@@ -576,7 +576,7 @@ class MainActivity : Activity() {
         val homeLabelOption = if (showHomeLabels) "Hide home labels" else "Show home labels"
         val drawerLabelOption = if (showDrawerLabels) "Hide app drawer labels" else "Show app drawer labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels")) { _, index ->
+            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> drawerGridPicker()
@@ -599,6 +599,7 @@ class MainActivity : Activity() {
                     15 -> dockIconSizePicker()
                     16 -> dockBackgroundPicker()
                     17 -> { prefs.edit().putBoolean("dock_show_labels", !dockShowLabels).apply(); refreshDock() }
+                    18 -> homeIconShapePicker()
                 }
             }.show()
     }
@@ -620,6 +621,29 @@ class MainActivity : Activity() {
             }
             .setPositiveButton("Save") { _, _ ->
                 prefs.edit().putStringSet("hidden_apps", selected).apply()
+                render()
+            }.setNegativeButton("Cancel", null).show()
+    }
+
+    private fun homeIconBackground(): android.graphics.drawable.Drawable? {
+        return when (prefs.getInt("home_icon_shape", 0)) {
+            1 -> GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(0xff2f3544.toInt())
+            }
+            2 -> bg(0xff2f3544.toInt(), 24)
+            3 -> null
+            else -> bg(0xff2f3544.toInt(), 18)
+        }
+    }
+
+    private fun homeIconShapePicker() {
+        val options = arrayOf("Rounded square", "Circle", "Squircle", "No background")
+        val current = prefs.getInt("home_icon_shape", 0).coerceIn(0, options.lastIndex)
+        AlertDialog.Builder(this).setTitle("Home icon shape")
+            .setSingleChoiceItems(options, current) { dialog, which ->
+                prefs.edit().putInt("home_icon_shape", which).apply()
+                dialog.dismiss()
                 render()
             }.setNegativeButton("Cancel", null).show()
     }
