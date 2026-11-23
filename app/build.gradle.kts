@@ -11,8 +11,17 @@ android {
         applicationId = "com.veeresh.hyperlauncher"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 100
+        versionName = "1.0.0"
+    }
+
+    buildTypes {
+        getByName("release") {
+            isMinifyEnabled = false
+            // Local-install release. The CI workflow signs this APK with the
+            // standard debug key because no private production keystore is stored in this public repo.
+            signingConfig = signingConfigs.getByName("debug")
+        }
     }
 
     buildFeatures {
