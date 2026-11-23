@@ -1823,7 +1823,11 @@ class MainActivity : Activity() {
         if (pkg == lastLaunchPackage && now - lastLaunchTimeMs < 500L) return
         val intent = packageManager.getLaunchIntentForPackage(pkg)
         if (intent == null) {
-            Toast.makeText(this, "App unavailable", Toast.LENGTH_SHORT).show()
+            cachedApps = null
+            cachedAppSearchLabels = null
+            cachedAppSearchPackages = null
+            if (::grid.isInitialized) render()
+            Toast.makeText(this, "App unavailable. App list refreshed.", Toast.LENGTH_SHORT).show()
             return
         }
         try {
