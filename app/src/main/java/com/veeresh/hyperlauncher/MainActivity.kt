@@ -335,7 +335,9 @@ class MainActivity : Activity() {
             background = folderPreviewBackground()
             setPadding(dp(5), dp(5), dp(5), dp(5))
         }
-        all.filter { it.activityInfo.packageName in pkgs }.take(previewColumns * previewColumns).forEach { info ->
+        val previewApps = all.filter { it.activityInfo.packageName in pkgs }
+            .let { if (prefs.getBoolean("folder_reverse_sort", false)) it.reversed() else it }
+        previewApps.take(previewColumns * previewColumns).forEach { info ->
             val miniIcon = android.widget.ImageView(this).apply {
                 setImageDrawable(info.loadIcon(packageManager))
                 scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
@@ -435,6 +437,7 @@ class MainActivity : Activity() {
             else -> 44
         }
         val folderApps = all.filter { it.activityInfo.packageName in pkgs }
+            .let { if (prefs.getBoolean("folder_reverse_sort", false)) it.reversed() else it }
         val tileHeightDp = iconSize + 12 + (if (showFolderAppLabels) 34 else 0) + 12
         val box = GridLayout(this).apply { columnCount = folderColumns }
         folderApps.forEach { info ->
@@ -620,7 +623,7 @@ class MainActivity : Activity() {
         val homeLabelOption = if (showHomeLabels) "Hide home labels" else "Show home labels"
         val drawerLabelOption = if (showDrawerLabels) "Hide app drawer labels" else "Show app drawer labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape", "Folder preview layout", if (showFolderLabels) "Hide folder labels" else "Show folder labels", "Folder label size", "Folder app grid", "Opened folder background", "Opened folder shape", if (showFolderAppLabels) "Hide folder app labels" else "Show folder app labels")) { _, index ->
+            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape", "Folder preview layout", if (showFolderLabels) "Hide folder labels" else "Show folder labels", "Folder label size", "Folder app grid", "Opened folder background", "Opened folder shape", if (showFolderAppLabels) "Hide folder app labels" else "Show folder app labels", "Folder app sorting")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> drawerGridPicker()
@@ -654,6 +657,7 @@ class MainActivity : Activity() {
                     26 -> openedFolderBackgroundPicker()
                     27 -> openedFolderShapePicker()
                     28 -> { prefs.edit().putBoolean("folder_app_show_labels", !showFolderAppLabels).apply(); render() }
+                    29 -> folderSortPicker()
                 }
             }.show()
     }
@@ -742,6 +746,17 @@ class MainActivity : Activity() {
             3 -> null
             else -> bg(color, 18)
         }
+    }
+
+    private fun folderSortPicker() {
+        val options = arrayOf("A → Z", "Z → A")
+        val current = if (prefs.getBoolean("folder_reverse_sort", false)) 1 else 0
+        AlertDialog.Builder(this).setTitle("Folder app sorting")
+            .setSingleChoiceItems(options, current) { dialog, which ->
+                prefs.edit().putBoolean("folder_reverse_sort", which == 1).apply()
+                dialog.dismiss()
+                render()
+            }.setNegativeButton("Cancel", null).show()
     }
 
     private fun folderOpenGridPicker() {
