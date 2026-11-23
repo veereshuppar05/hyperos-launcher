@@ -110,7 +110,7 @@ class MainActivity : Activity() {
             setOnEditorActionListener { _, actionId, _ ->
                 if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                     val imm = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
-                    imm.hideSoftInput(this, 0)
+                    imm.hideSoftInputFromWindow(windowToken, 0)
                     true
                 } else false
             }
