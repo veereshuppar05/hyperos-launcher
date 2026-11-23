@@ -133,6 +133,14 @@ class MainActivity : Activity() {
                         } else if (deltaX > 0 && showingApps) {
                             switchPage(false)
                         }
+                    } else if (prefs.getBoolean("vertical_swipe_gestures", true) &&
+                        kotlin.math.abs(deltaY) > dp(120) &&
+                        kotlin.math.abs(deltaY) > kotlin.math.abs(deltaX) * 1.3f) {
+                        if (deltaY < 0 && !showingApps) {
+                            switchPage(true)
+                        } else if (deltaY > 0 && showingApps) {
+                            switchPage(false)
+                        }
                     }
                 }
             }
@@ -769,7 +777,7 @@ class MainActivity : Activity() {
         val homeLabelOption = if (showHomeLabels) "Hide home labels" else "Show home labels"
         val drawerLabelOption = if (showDrawerLabels) "Hide app drawer labels" else "Show app drawer labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape", "Folder preview layout", if (showFolderLabels) "Hide folder labels" else "Show folder labels", "Folder label size", "Folder app grid", "Opened folder background", "Opened folder shape", if (showFolderAppLabels) "Hide folder app labels" else "Show folder app labels", "Folder app sorting", "Opened folder icon size", "Opened folder app label size", "Wallpaper dimming", "Home icon background opacity", "Home label colour", "App drawer label colour", "Dock background shape", "Dock background opacity", "Dock label size", "Dock label colour", "Dock side padding", "Dock icon spacing", if (prefs.getBoolean("dock_label_bold", false)) "Dock label: Bold" else "Dock label: Regular", "Dock label background", "Dock icon opacity", "Dock vertical position", "Dock height", "Dock alignment", "Dock label shadow", "Dock icon-label spacing", "Dock label letter spacing", "Dock label opacity", "Dock label font style", "Dock label capitalization", "Dock label padding", "Tap feedback")) { _, index ->
+            .setItems(arrayOf("Home grid", "App drawer grid", "App sorting", "Customize dock", "Home icon size", "App drawer icon size", "Home label size", "App drawer label size", "Home spacing", "Change wallpaper", "Reset wallpaper", homeLabelOption, drawerLabelOption, "Clear home pins", "Manage hidden apps", "Dock icon size", "Dock background", if (dockShowLabels) "Hide dock labels" else "Show dock labels", "Home icon shape", "Home icon background", "Folder preview background", "Folder preview shape", "Folder preview layout", if (showFolderLabels) "Hide folder labels" else "Show folder labels", "Folder label size", "Folder app grid", "Opened folder background", "Opened folder shape", if (showFolderAppLabels) "Hide folder app labels" else "Show folder app labels", "Folder app sorting", "Opened folder icon size", "Opened folder app label size", "Wallpaper dimming", "Home icon background opacity", "Home label colour", "App drawer label colour", "Dock background shape", "Dock background opacity", "Dock label size", "Dock label colour", "Dock side padding", "Dock icon spacing", if (prefs.getBoolean("dock_label_bold", false)) "Dock label: Bold" else "Dock label: Regular", "Dock label background", "Dock icon opacity", "Dock vertical position", "Dock height", "Dock alignment", "Dock label shadow", "Dock icon-label spacing", "Dock label letter spacing", "Dock label opacity", "Dock label font style", "Dock label capitalization", "Dock label padding", "Tap feedback", "Vertical swipe gestures")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
                     1 -> drawerGridPicker()
@@ -830,6 +838,7 @@ class MainActivity : Activity() {
                     53 -> dockLabelCapitalizationPicker()
                     54 -> dockLabelPaddingPicker()
                     55 -> tapFeedbackPicker()
+                    56 -> verticalSwipeToggle()
                 }
             }.show()
     }
@@ -1233,6 +1242,16 @@ class MainActivity : Activity() {
             }.setNegativeButton("Cancel", null).show()
     }
 
+
+    private fun verticalSwipeToggle() {
+        val enabled = prefs.getBoolean("vertical_swipe_gestures", true)
+        AlertDialog.Builder(this).setTitle("Vertical swipe gestures")
+            .setMessage(if (enabled) "Vertical swipes are enabled. Disable them?" else "Vertical swipes are disabled. Enable them?")
+            .setPositiveButton(if (enabled) "Disable" else "Enable") { _, _ ->
+                prefs.edit().putBoolean("vertical_swipe_gestures", !enabled).apply()
+                Toast.makeText(this, if (enabled) "Vertical swipes disabled" else "Vertical swipes enabled", Toast.LENGTH_SHORT).show()
+            }.setNegativeButton("Cancel", null).show()
+    }
 
     private fun tapFeedbackPicker() {
         val options = arrayOf("Off", "Scale", "Bounce")
