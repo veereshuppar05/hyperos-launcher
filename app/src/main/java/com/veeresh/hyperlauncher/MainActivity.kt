@@ -33,6 +33,7 @@ class MainActivity : Activity() {
     private var showingApps = false
     private var pageTransitioning = false
     private val columns: Int get() = prefs.getInt("grid_columns", 5)
+    private val drawerColumns: Int get() = prefs.getInt("drawer_columns", 5)
     private val prefs by lazy { getSharedPreferences("hyperlauncher", MODE_PRIVATE) }
     private val showLabels: Boolean get() = prefs.getBoolean("show_labels", true)
     private val iconSizeDp: Int get() = prefs.getInt("icon_size_dp", 58)
@@ -207,7 +208,7 @@ class MainActivity : Activity() {
 
     private fun render() {
         if (!::grid.isInitialized) return
-        grid.columnCount = columns
+        grid.columnCount = if (showingApps) drawerColumns else columns
         grid.removeAllViews()
         sectionHeaders.clear()
         if (::alphabetRail.isInitialized) alphabetRail.visibility = if (showingApps && search.text.isEmpty()) android.view.View.VISIBLE else android.view.View.GONE
@@ -221,7 +222,8 @@ class MainActivity : Activity() {
                      }
                      else all.filter { it.activityInfo.packageName in home }
         if (!showingApps && query.isEmpty()) folderMap().forEach { (name, packages) -> folderTile(name, packages, all) }
-        val width = (resources.displayMetrics.widthPixels - dp(32)) / columns
+        val activeColumns = if (showingApps) drawerColumns else columns
+        val width = (resources.displayMetrics.widthPixels - dp(32)) / activeColumns
         if (showingApps && query.isEmpty()) {
             chosen.groupBy { it.loadLabel(packageManager).toString().firstOrNull()?.uppercaseChar() ?: '#' }
                 .toSortedMap()
@@ -257,7 +259,7 @@ class MainActivity : Activity() {
         grid.addView(header, GridLayout.LayoutParams().apply {
             width = resources.displayMetrics.widthPixels - dp(32)
             height = dp(30)
-            columnSpec = GridLayout.spec(0, columns)
+            columnSpec = GridLayout.spec(0, if (showingApps) drawerColumns else columns)
         })
     }
 
@@ -538,19 +540,20 @@ class MainActivity : Activity() {
     private fun settings() {
         val labelOption = if (showLabels) "Hide app labels" else "Show app labels"
         AlertDialog.Builder(this).setTitle("Launcher settings")
-            .setItems(arrayOf("Home grid", "Customize dock", "Icon size", "Change wallpaper", "Reset wallpaper", labelOption, "Clear home pins", "Manage hidden apps")) { _, index ->
+            .setItems(arrayOf("Home grid", "App drawer grid", "Customize dock", "Icon size", "Change wallpaper", "Reset wallpaper", labelOption, "Clear home pins", "Manage hidden apps")) { _, index ->
                 when (index) {
                     0 -> homeGridPicker()
-                    1 -> dockPicker()
-                    2 -> iconSizePicker()
-                    3 -> chooseWallpaper()
-                    4 -> { prefs.edit().remove("wallpaper_uri").apply(); recreate() }
-                    5 -> { prefs.edit().putBoolean("show_labels", !showLabels).apply(); render() }
-                    6 -> AlertDialog.Builder(this).setTitle("Clear home pins?")
+                    1 -> drawerGridPicker()
+                    2 -> dockPicker()
+                    3 -> iconSizePicker()
+                    4 -> chooseWallpaper()
+                    5 -> { prefs.edit().remove("wallpaper_uri").apply(); recreate() }
+                    6 -> { prefs.edit().putBoolean("show_labels", !showLabels).apply(); render() }
+                    7 -> AlertDialog.Builder(this).setTitle("Clear home pins?")
                         .setMessage("Remove all pinned apps from the Home tab?")
                         .setPositiveButton("Clear") { _, _ -> prefs.edit().putStringSet("pinned", emptySet()).apply(); render() }
                         .setNegativeButton("Cancel", null).show()
-                    7 -> manageHiddenApps()
+                    8 -> manageHiddenApps()
                 }
             }.show()
     }
@@ -587,6 +590,19 @@ class MainActivity : Activity() {
                 render()
             }.setNegativeButton("Cancel", null).show()
     }
+
+    private fun drawerGridPicker() {
+        val options = arrayOf("4 columns", "5 columns", "6 columns", "7 columns")
+        val values = intArrayOf(4, 5, 6, 7)
+        val current = values.indexOf(drawerColumns).coerceAtLeast(0)
+        AlertDialog.Builder(this).setTitle("App drawer grid")
+            .setSingleChoiceItems(options, current) { dialog, which ->
+                prefs.edit().putInt("drawer_columns", values[which]).apply()
+                dialog.dismiss()
+                render()
+            }.setNegativeButton("Cancel", null).show()
+    }
+
 
     private fun iconSizePicker() {
         val sizes = arrayOf("Small", "Medium", "Large")
